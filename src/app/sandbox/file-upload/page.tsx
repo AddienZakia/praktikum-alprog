@@ -9,7 +9,7 @@ interface FormDataType {
   resume: File | null;
 }
 
-export default function FileUploadSandbox(): JSX.Element {
+export default function FileUploadSandbox() {
   const methods = useForm<FormDataType>({
     defaultValues: {
       avatar: null,
