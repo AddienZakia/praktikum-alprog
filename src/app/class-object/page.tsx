@@ -3,7 +3,7 @@
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import Link from 'next/link';
-import { useEffect, useRef, useState } from 'react';
+import { useCallback, useEffect, useRef, useState } from 'react';
 import { toast } from 'sonner';
 
 // ─── Types ────────────────────────────────────────────────────────────────────
@@ -51,20 +51,20 @@ interface Scenario {
 const SCENARIOS: Scenario[] = [
   {
     key: 'basic',
-    title: 'Blueprint Kelas → Objek',
+    title: 'Class Blueprint → Object',
     description:
-      'Pahami bagaimana kelas mendefinisikan blueprint dan objek adalah instance darinya.',
+      'Pahami gimana class mendefinisikan blueprint dan object adalah instansi dari class tersebut.',
     classCode: [
       '// File: Car.java',
       'public class Car {',
-      '    // Atribut (field)',
+      '    // Attributes (fields)',
       '    String brand;',
       '    String color;',
       '    int year;',
       '',
       '    // Method',
       '    public void honk() {',
-      '        System.out.println(brand + " bilang: Beep!");',
+      '        System.out.println(brand + " says: Beep!");',
       '    }',
       '',
       '    public String getInfo() {',
@@ -78,7 +78,7 @@ const SCENARIOS: Scenario[] = [
       '    public static void main(String[] args) {',
       '        Car myCar = new Car();',
       '        myCar.brand = "Toyota";',
-      '        myCar.color = "Merah";',
+      '        myCar.color = "Red";',
       '        myCar.year  = 2024;',
       '        myCar.honk();',
       '        String info = myCar.getInfo();',
@@ -97,49 +97,49 @@ const SCENARIOS: Scenario[] = [
       {
         lineIndex: 1,
         file: 'class',
-        description: 'Kelas Car didefinisikan — ini adalah BLUEPRINT-nya',
+        description: 'Class Car didefinisikan — ini adalah BLUEPRINT-nya',
         phase: 'normal',
         activeBlueprint: [],
       },
       {
         lineIndex: 3,
         file: 'class',
-        description: 'Blueprint mendeklarasikan atribut: brand (String)',
+        description: 'Blueprint deklarasi atribut: brand (String)',
         phase: 'normal',
         activeBlueprint: ['brand'],
       },
       {
         lineIndex: 4,
         file: 'class',
-        description: 'Blueprint mendeklarasikan atribut: color (String)',
+        description: 'Blueprint deklarasi atribut: color (String)',
         phase: 'normal',
         activeBlueprint: ['color'],
       },
       {
         lineIndex: 5,
         file: 'class',
-        description: 'Blueprint mendeklarasikan atribut: year (int)',
+        description: 'Blueprint deklarasi atribut: year (int)',
         phase: 'normal',
         activeBlueprint: ['year'],
       },
       {
         lineIndex: 8,
         file: 'class',
-        description: 'Blueprint mendeklarasikan method: honk()',
+        description: 'Blueprint deklarasi method: honk()',
         phase: 'normal',
         activeBlueprint: ['honk()'],
       },
       {
         lineIndex: 12,
         file: 'class',
-        description: 'Blueprint mendeklarasikan method: getInfo()',
+        description: 'Blueprint deklarasi method: getInfo()',
         phase: 'normal',
         activeBlueprint: ['getInfo()'],
       },
       {
         lineIndex: 3,
         file: 'main',
-        description: 'new Car() — JVM membuat instance objek dari blueprint!',
+        description: 'new Car() — JVM bikin instance object dari blueprint!',
         phase: 'instantiate',
         activeBlueprint: [],
         activeObjects: ['myCar'],
@@ -148,7 +148,7 @@ const SCENARIOS: Scenario[] = [
       {
         lineIndex: 4,
         file: 'main',
-        description: 'myCar.brand = "Toyota" — mengatur atribut pada objek',
+        description: 'myCar.brand = "Toyota" — setting attribute on the object',
         phase: 'normal',
         activeBlueprint: ['brand'],
         activeObjects: ['myCar'],
@@ -158,12 +158,12 @@ const SCENARIOS: Scenario[] = [
       {
         lineIndex: 5,
         file: 'main',
-        description: 'myCar.color = "Merah"',
+        description: 'myCar.color = "Red"',
         phase: 'normal',
         activeBlueprint: ['color'],
         activeObjects: ['myCar'],
         objectState: {
-          myCar: { brand: '"Toyota"', color: '"Merah"', year: '0' },
+          myCar: { brand: '"Toyota"', color: '"Red"', year: '0' },
         },
         highlightObjectField: 'color',
       },
@@ -175,7 +175,7 @@ const SCENARIOS: Scenario[] = [
         activeBlueprint: ['year'],
         activeObjects: ['myCar'],
         objectState: {
-          myCar: { brand: '"Toyota"', color: '"Merah"', year: '2024' },
+          myCar: { brand: '"Toyota"', color: '"Red"', year: '2024' },
         },
         highlightObjectField: 'year',
       },
@@ -183,31 +183,32 @@ const SCENARIOS: Scenario[] = [
         lineIndex: 7,
         file: 'main',
         description:
-          'myCar.honk() — memanggil method yang didefinisikan di blueprint',
+          'myCar.honk() — memanggil method yang sudah didefinisikan di blueprint',
         phase: 'method',
         activeBlueprint: ['honk()'],
         activeObjects: ['myCar'],
         objectState: {
-          myCar: { brand: '"Toyota"', color: '"Merah"', year: '2024' },
+          myCar: { brand: '"Toyota"', color: '"Red"', year: '2024' },
         },
-        stateVars: { output: '"Toyota bilang: Beep!"' },
+        stateVars: { output: '"Toyota says: Beep!"' },
       },
       {
         lineIndex: 8,
         file: 'main',
-        description: 'myCar.getInfo() — mengembalikan string terformat',
+        description:
+          'myCar.getInfo() — mengembalikan string yang sudah diformat',
         phase: 'method',
         activeBlueprint: ['getInfo()'],
         activeObjects: ['myCar'],
-        stateVars: { info: '"Toyota Merah (2024)"' },
+        stateVars: { info: '"Toyota Red (2024)"' },
       },
     ],
   },
   {
     key: 'constructor',
-    title: 'Constructor & Banyak Objek',
+    title: 'Constructor & Multiple Objects',
     description:
-      'Gunakan constructor untuk menginisialisasi objek, buat beberapa instance dari satu blueprint.',
+      'Pakai constructor untuk inisialisasi object, buat banyak instansi dari satu blueprint.',
     classCode: [
       '// File: Student.java',
       'public class Student {',
@@ -223,7 +224,7 @@ const SCENARIOS: Scenario[] = [
       '    }',
       '',
       '    public void printReport() {',
-      '        System.out.println(name + " | Kelas: " + grade + " | IPK: " + gpa);',
+      '        System.out.println(name + " | Grade: " + grade + " | GPA: " + gpa);',
       '    }',
       '}',
     ],
@@ -231,9 +232,9 @@ const SCENARIOS: Scenario[] = [
       '// File: Main.java',
       'public class Main {',
       '    public static void main(String[] args) {',
-      '        Student s1 = new Student("Budi", 12, 3.9);',
-      '        Student s2 = new Student("Siti",  11, 3.5);',
-      '        Student s3 = new Student("Andi",  10, 3.7);',
+      '        Student s1 = new Student("Alice", 12, 3.9);',
+      '        Student s2 = new Student("Bob",   11, 3.5);',
+      '        Student s3 = new Student("Charlie",10, 3.7);',
       '        s1.printReport();',
       '        s2.printReport();',
       '        s3.printReport();',
@@ -255,7 +256,7 @@ const SCENARIOS: Scenario[] = [
       {
         lineIndex: 1,
         file: 'class',
-        description: 'Blueprint kelas Student didefinisikan',
+        description: 'Blueprint class Student didefinisikan',
         phase: 'normal',
         activeBlueprint: [],
       },
@@ -284,7 +285,7 @@ const SCENARIOS: Scenario[] = [
         lineIndex: 7,
         file: 'class',
         description:
-          'Constructor didefinisikan — menginisialisasi 3 field sekaligus',
+          'Constructor didefinisikan — langsung inisialisasi 3 field sekaligus',
         phase: 'normal',
         activeBlueprint: ['Student(name,grade,gpa)'],
       },
@@ -299,74 +300,74 @@ const SCENARIOS: Scenario[] = [
         lineIndex: 3,
         file: 'main',
         description:
-          'new Student("Budi", 12, 3.9) — constructor dipanggil, s1 dibuat',
+          'new Student("Alice", 12, 3.9) — constructor called, s1 created',
         phase: 'instantiate',
         activeBlueprint: ['Student(name,grade,gpa)'],
         activeObjects: ['s1'],
-        objectState: { s1: { name: '"Budi"', grade: '12', gpa: '3.9' } },
+        objectState: { s1: { name: '"Alice"', grade: '12', gpa: '3.9' } },
       },
       {
         lineIndex: 4,
         file: 'main',
-        description: 'new Student("Siti", 11, 3.5) — objek kedua s2 dibuat',
+        description: 'new Student("Bob", 11, 3.5) — second object s2 created',
         phase: 'instantiate',
         activeBlueprint: ['Student(name,grade,gpa)'],
         activeObjects: ['s1', 's2'],
         objectState: {
-          s1: { name: '"Budi"', grade: '12', gpa: '3.9' },
-          s2: { name: '"Siti"', grade: '11', gpa: '3.5' },
+          s1: { name: '"Alice"', grade: '12', gpa: '3.9' },
+          s2: { name: '"Bob"', grade: '11', gpa: '3.5' },
         },
       },
       {
         lineIndex: 5,
         file: 'main',
-        description: 'new Student("Andi", 10, 3.7) — objek ketiga s3',
+        description: 'new Student("Charlie", 10, 3.7) — third object s3',
         phase: 'instantiate',
         activeBlueprint: ['Student(name,grade,gpa)'],
         activeObjects: ['s1', 's2', 's3'],
         objectState: {
-          s1: { name: '"Budi"', grade: '12', gpa: '3.9' },
-          s2: { name: '"Siti"', grade: '11', gpa: '3.5' },
-          s3: { name: '"Andi"', grade: '10', gpa: '3.7' },
+          s1: { name: '"Alice"', grade: '12', gpa: '3.9' },
+          s2: { name: '"Bob"', grade: '11', gpa: '3.5' },
+          s3: { name: '"Charlie"', grade: '10', gpa: '3.7' },
         },
       },
       {
         lineIndex: 6,
         file: 'main',
-        description: 's1.printReport() — data s1 digunakan',
+        description: 's1.printReport() — data milik s1 yang dipakai',
         phase: 'method',
         activeBlueprint: ['printReport()'],
         activeObjects: ['s1'],
-        stateVars: { output: '"Budi | Kelas: 12 | IPK: 3.9"' },
+        stateVars: { output: '"Alice | Grade: 12 | GPA: 3.9"' },
       },
       {
         lineIndex: 7,
         file: 'main',
         description:
-          's2.printReport() — data s2 digunakan (method yang sama, objek berbeda!)',
+          's2.printReport() — data milik s2 (method sama, object beda!)',
         phase: 'method',
         activeBlueprint: ['printReport()'],
         activeObjects: ['s2'],
-        stateVars: { output: '"Siti | Kelas: 11 | IPK: 3.5"' },
+        stateVars: { output: '"Bob | Grade: 11 | GPA: 3.5"' },
       },
       {
         lineIndex: 8,
         file: 'main',
-        description: 's3.printReport() — data s3',
+        description: 's3.printReport() — data milik s3',
         phase: 'method',
         activeBlueprint: ['printReport()'],
         activeObjects: ['s3'],
-        stateVars: { output: '"Andi | Kelas: 10 | IPK: 3.7"' },
+        stateVars: { output: '"Charlie | Grade: 10 | GPA: 3.7"' },
       },
     ],
   },
   {
     key: 'multifile',
-    title: 'Multi-File / Modul Import',
+    title: 'Multi-File / Import Module',
     description:
-      'Kelas dalam file terpisah — import dan gunakan ulang seperti modul dalam proyek besar.',
+      'Class di file terpisah — import dan pakai ulang seperti modul di proyek besar.',
     classCode: [
-      '// File: BankAccount.java  (file terpisah!)',
+      '// File: BankAccount.java  (separate file!)',
       'public class BankAccount {',
       '    private String owner;',
       '    private double balance;',
@@ -378,12 +379,12 @@ const SCENARIOS: Scenario[] = [
       '',
       '    public void deposit(double amount) {',
       '        balance += amount;',
-      '        System.out.println(owner + " menyetor: " + amount);',
+      '        System.out.println(owner + " deposited: " + amount);',
       '    }',
       '',
       '    public void withdraw(double amount) {',
       '        if (amount <= balance) balance -= amount;',
-      '        else System.out.println("Saldo tidak cukup!");',
+      '        else System.out.println("Insufficient funds!");',
       '    }',
       '',
       '    public double getBalance() { return balance; }',
@@ -392,13 +393,13 @@ const SCENARIOS: Scenario[] = [
     ],
     mainCode: [
       '// File: Main.java',
-      '// Tidak perlu import — paket yang sama!',
+      '// No import needed — same package!',
       'public class Main {',
       '    public static void main(String[] args) {',
-      '        BankAccount acc = new BankAccount("Budi", 1000.0);',
+      '        BankAccount acc = new BankAccount("Alice", 1000.0);',
       '        acc.deposit(500.0);',
       '        acc.withdraw(200.0);',
-      '        System.out.println("Saldo: " + acc.getBalance());',
+      '        System.out.println("Balance: " + acc.getBalance());',
       '    }',
       '}',
     ],
@@ -420,41 +421,41 @@ const SCENARIOS: Scenario[] = [
         lineIndex: 0,
         file: 'class',
         description:
-          'BankAccount.java — file terpisah yang berfungsi sebagai modul',
+          'BankAccount.java — file terpisah yang berperan sebagai modul',
         phase: 'import',
       },
       {
         lineIndex: 1,
         file: 'class',
-        description: 'Blueprint kelas: 2 atribut private',
+        description: 'Blueprint class: 2 atribut private',
         phase: 'normal',
         activeBlueprint: ['owner', 'balance'],
       },
       {
         lineIndex: 5,
         file: 'class',
-        description: 'Constructor menginisialisasi owner dan balance',
+        description: 'Constructor inisialisasi owner dan balance',
         phase: 'normal',
         activeBlueprint: ['BankAccount(owner,balance)'],
       },
       {
         lineIndex: 10,
         file: 'class',
-        description: 'deposit() — menambah saldo',
+        description: 'deposit() — tambahkan ke balance',
         phase: 'normal',
         activeBlueprint: ['deposit(amount)'],
       },
       {
         lineIndex: 15,
         file: 'class',
-        description: 'withdraw() — pengurangan aman dengan validasi',
+        description: 'withdraw() — kurangi dengan validasi aman',
         phase: 'normal',
         activeBlueprint: ['withdraw(amount)'],
       },
       {
         lineIndex: 20,
         file: 'class',
-        description: 'Method getter mengekspos data private dengan aman',
+        description: 'Method getter expose data private dengan aman',
         phase: 'normal',
         activeBlueprint: ['getBalance()', 'getOwner()'],
       },
@@ -462,46 +463,45 @@ const SCENARIOS: Scenario[] = [
         lineIndex: 1,
         file: 'main',
         description:
-          'Main.java — menggunakan BankAccount seperti modul (paket sama)',
+          'Main.java — pakai BankAccount seperti modul (package sama)',
         phase: 'import',
       },
       {
         lineIndex: 4,
         file: 'main',
-        description: 'new BankAccount("Budi", 1000.0) — objek dibuat',
+        description: 'new BankAccount("Alice", 1000.0) — object created',
         phase: 'instantiate',
         activeBlueprint: ['BankAccount(owner,balance)'],
         activeObjects: ['acc'],
-        objectState: { acc: { owner: '"Budi"', balance: '1000.0' } },
+        objectState: { acc: { owner: '"Alice"', balance: '1000.0' } },
       },
       {
         lineIndex: 5,
         file: 'main',
-        description: 'acc.deposit(500.0) — saldo bertambah',
+        description: 'acc.deposit(500.0) — balance bertambah',
         phase: 'method',
         activeBlueprint: ['deposit(amount)'],
         activeObjects: ['acc'],
-        objectState: { acc: { owner: '"Budi"', balance: '1500.0' } },
-        stateVars: { output: '"Budi menyetor: 500.0"' },
+        objectState: { acc: { owner: '"Alice"', balance: '1500.0' } },
+        stateVars: { output: '"Alice deposited: 500.0"' },
       },
       {
         lineIndex: 6,
         file: 'main',
-        description: 'acc.withdraw(200.0) — saldo berkurang',
+        description: 'acc.withdraw(200.0) — balance berkurang',
         phase: 'method',
         activeBlueprint: ['withdraw(amount)'],
         activeObjects: ['acc'],
-        objectState: { acc: { owner: '"Budi"', balance: '1300.0' } },
+        objectState: { acc: { owner: '"Alice"', balance: '1300.0' } },
       },
       {
         lineIndex: 7,
         file: 'main',
-        description:
-          'acc.getBalance() — mengembalikan field private via getter',
+        description: 'acc.getBalance() — kembalikan field private lewat getter',
         phase: 'method',
         activeBlueprint: ['getBalance()'],
         activeObjects: ['acc'],
-        stateVars: { dikembalikan: '1300.0' },
+        stateVars: { returned: '1300.0' },
       },
     ],
   },
@@ -520,10 +520,11 @@ function BlueprintCard({
 }) {
   return (
     <div className="overflow-hidden rounded-xl border-2 border-dashed border-slate-700 bg-slate-900/30">
+      {/* Header */}
       <div className="flex items-center gap-2 border-b border-slate-700 bg-slate-800 px-4 py-2">
         <div className="h-2 w-2 rounded-full bg-sky-400" />
         <span className="text-xs font-bold tracking-wider text-sky-300 uppercase">
-          BLUEPRINT KELAS
+          BLUEPRINT CLASS
         </span>
         <span className="ml-1 text-xs text-slate-500">
           {scenario.key === 'basic'
@@ -533,6 +534,7 @@ function BlueprintCard({
               : 'BankAccount'}
         </span>
       </div>
+      {/* Attributes */}
       <div className="flex flex-col gap-1 p-3">
         {blueprint
           .filter((f) => f.kind === 'attribute')
@@ -562,7 +564,9 @@ function BlueprintCard({
               </span>
             </div>
           ))}
+        {/* Separator */}
         <div className="my-1 border-t border-slate-800" />
+        {/* Constructors */}
         {blueprint
           .filter((f) => f.kind === 'constructor')
           .map((f) => (
@@ -587,6 +591,7 @@ function BlueprintCard({
               <span className="ml-auto text-xs text-amber-700">{f.type}</span>
             </div>
           ))}
+        {/* Methods */}
         {blueprint
           .filter((f) => f.kind === 'method')
           .map((f) => (
@@ -650,7 +655,7 @@ function ObjectCard({
         <span
           className={`text-xs font-bold ${isActive ? 'text-emerald-300' : 'text-slate-500'}`}
         >
-          OBJEK: {name}
+          OBJECT: {name}
         </span>
         <span
           className={`ml-auto text-xs ${isActive ? 'text-emerald-600' : 'text-slate-700'}`}
@@ -686,6 +691,24 @@ function ObjectCard({
 
 // ─── Main Component ───────────────────────────────────────────────────────────
 
+// ─── Keyboard Hint ────────────────────────────────────────────────────────────
+
+function KeyboardHint() {
+  return (
+    <div className="flex items-center gap-2 rounded-lg border border-slate-800 bg-slate-900/60 px-3 py-1.5 backdrop-blur">
+      <span className="text-xs text-slate-500">Navigasi pakai keyboard:</span>
+      <div className="flex items-center gap-1">
+        <kbd className="inline-flex h-5 w-6 items-center justify-center rounded border border-slate-700 bg-slate-800 font-mono text-xs text-slate-400 shadow-[0_1px_0_rgba(0,0,0,0.4)]">
+          ←
+        </kbd>
+        <kbd className="inline-flex h-5 w-6 items-center justify-center rounded border border-slate-700 bg-slate-800 font-mono text-xs text-slate-400 shadow-[0_1px_0_rgba(0,0,0,0.4)]">
+          →
+        </kbd>
+      </div>
+    </div>
+  );
+}
+
 export default function ClassObjectPage() {
   const [selectedScenario, setSelectedScenario] = useState<Scenario>(
     SCENARIOS[0],
@@ -702,29 +725,33 @@ export default function ClassObjectPage() {
     setActiveFile('class');
   };
 
-  const handleNext = () => {
+  // ── Keyboard navigation ──────────────────────────────────────────────────
+
+  const handleNext = useCallback(() => {
     if (currentStep < totalSteps - 1) {
       const next = selectedScenario.steps[currentStep + 1];
       setCurrentStep((s) => s + 1);
       setActiveFile(next.file);
     }
-  };
+  }, [currentStep, totalSteps]);
 
-  const handlePrev = () => {
+  const handlePrev = useCallback(() => {
     if (currentStep > 0) {
       const prev = selectedScenario.steps[currentStep - 1];
       setCurrentStep((s) => s - 1);
       setActiveFile(prev.file);
     }
-  };
-  const hasShown = useRef(false);
+  }, [currentStep]);
 
   useEffect(() => {
-    if (hasShown.current) return;
+    const onKey = (e: KeyboardEvent) => {
+      if (e.key === 'ArrowRight') handleNext();
+      if (e.key === 'ArrowLeft') handlePrev();
+    };
+    window.addEventListener('keydown', onKey);
+    return () => window.removeEventListener('keydown', onKey);
+  }, [handleNext, handlePrev]);
 
-    hasShown.current = true;
-    toast.info('Disarankan menggunakan device desktop');
-  }, []);
   const displayCode =
     activeFile === 'class'
       ? selectedScenario.classCode
@@ -746,15 +773,25 @@ export default function ClassObjectPage() {
     step.phase === 'instantiate'
       ? '⚡ new Object()'
       : step.phase === 'method'
-        ? 'ƒ Panggil Method'
+        ? 'ƒ Pemanggilan Method'
         : step.phase === 'import'
           ? '📦 Modul'
           : step.phase === 'return'
             ? '↩ Return'
             : '▶ Berjalan';
 
+  const hasShown = useRef(false);
+
+  useEffect(() => {
+    if (hasShown.current) return;
+
+    hasShown.current = true;
+    toast.info('Disarankan menggunakan device desktop');
+  }, []);
+
   return (
     <div className="flex min-h-screen flex-col bg-[#0d1117] font-mono text-slate-200">
+      {/* Header */}
       <div className="sticky top-0 z-50 border-b border-slate-800 bg-[#0d1117]/95 backdrop-blur">
         <div className="flex flex-wrap items-center justify-between gap-3 px-4 py-3">
           <div className="flex items-center gap-3">
@@ -765,10 +802,10 @@ export default function ClassObjectPage() {
             </Link>
             <div>
               <h1 className="text-base leading-none font-bold text-white">
-                Kelas &amp; Objek
+                Class &amp; Object
               </h1>
               <p className="mt-0.5 text-xs text-slate-500">
-                Visualisasi Blueprint → Instance
+                Blueprint → Instance Visualizer
               </p>
             </div>
           </div>
@@ -817,10 +854,12 @@ export default function ClassObjectPage() {
         </div>
       </div>
 
+      {/* Split View */}
       <div
         className="grid min-h-0 flex-1 grid-cols-2 gap-0"
         style={{ height: 'calc(100vh - 110px)' }}
       >
+        {/* LEFT: Code Panel */}
         <div className="flex flex-col border-r border-slate-800 bg-[#161b22]">
           <div className="flex items-center justify-between border-b border-slate-800 bg-slate-900/50 px-4 py-2.5">
             <div className="flex items-center gap-2">
@@ -843,16 +882,17 @@ export default function ClassObjectPage() {
                   variant="outlined"
                   className="border-amber-700 text-xs text-amber-600"
                 >
-                  file berbeda aktif
+                  sedang di file lain
                 </Badge>
               )}
             </div>
           </div>
+          {/* State */}
           <div className="flex min-h-[52px] items-center border-b border-slate-800 bg-slate-900/20 px-4 py-2.5">
             {step.stateVars && Object.keys(step.stateVars).length > 0 ? (
               <div className="flex flex-wrap items-center gap-2">
-                <span className="text-xs tracking-wider text-slate-600 uppercase">
-                  Status:
+                <span className="text-xs tracking-wider text-slate-300 uppercase">
+                  State:
                 </span>
                 {Object.entries(step.stateVars).map(([k, v]) => (
                   <div
@@ -868,11 +908,12 @@ export default function ClassObjectPage() {
                 ))}
               </div>
             ) : (
-              <p className="text-xs text-slate-600 italic">
+              <p className="text-xs text-slate-300 italic">
                 {step.description}
               </p>
             )}
           </div>
+          {/* Code */}
           <div className="flex-1 overflow-auto p-2">
             {displayCode.map((line, idx) => {
               const isActive = idx === activeLineIdx;
@@ -911,6 +952,7 @@ export default function ClassObjectPage() {
               );
             })}
           </div>
+          {/* Controls */}
           <div className="border-t border-slate-800 bg-slate-900/30 px-4 py-3">
             <div className="mb-2 flex items-center gap-2">
               <div className="h-1.5 flex-1 rounded-full bg-slate-800">
@@ -925,6 +967,9 @@ export default function ClassObjectPage() {
                 {currentStep + 1}/{totalSteps}
               </span>
             </div>
+            <div className="mb-2 flex justify-center">
+              <KeyboardHint />
+            </div>
             <div className="flex justify-center gap-2">
               <Button
                 variant="outlined"
@@ -936,7 +981,7 @@ export default function ClassObjectPage() {
                 disabled={currentStep === 0}
                 className="h-8 border-slate-700 bg-slate-800 px-3 text-xs text-slate-300 hover:bg-slate-700 disabled:opacity-30"
               >
-                ⏮ Ulang
+                ⏮ Reset
               </Button>
               <Button
                 variant="outlined"
@@ -945,7 +990,7 @@ export default function ClassObjectPage() {
                 disabled={currentStep === 0}
                 className="h-8 border-slate-700 bg-slate-800 px-4 text-xs text-slate-300 hover:bg-slate-700 disabled:opacity-30"
               >
-                ← Sebelumnya
+                ← Prev
               </Button>
               <Button
                 variant="outlined"
@@ -954,12 +999,13 @@ export default function ClassObjectPage() {
                 disabled={currentStep === totalSteps - 1}
                 className="h-8 border-slate-700 bg-slate-800 px-4 text-xs text-slate-300 hover:bg-slate-700 disabled:opacity-30"
               >
-                Berikutnya →
+                Next →
               </Button>
             </div>
           </div>
         </div>
 
+        {/* RIGHT: Blueprint + Objects Panel */}
         <div className="flex flex-col overflow-hidden bg-[#161b22]">
           <div className="flex items-center justify-between border-b border-slate-800 bg-slate-900/50 px-4 py-2.5">
             <div className="flex items-center gap-2">
@@ -969,35 +1015,41 @@ export default function ClassObjectPage() {
                 <div className="h-3 w-3 rounded-full bg-emerald-500/80" />
               </div>
               <span className="ml-2 text-xs text-slate-400">
-                blueprint.tampilan
+                blueprint.view
               </span>
             </div>
-            <span className="max-w-[280px] text-right text-xs text-slate-500">
+          </div>
+
+          <div className="flex min-h-[52px] items-center border-b border-slate-800 bg-slate-900/30 px-4 py-2.5">
+            <p className="text-sm leading-snug text-slate-300">
               {step.description}
-            </span>
+            </p>
           </div>
 
           <div className="flex flex-1 flex-col gap-4 overflow-auto px-5 py-4">
+            {/* Blueprint */}
             <BlueprintCard
               blueprint={selectedScenario.blueprint}
               activeNames={step.activeBlueprint || []}
               scenario={selectedScenario}
             />
 
+            {/* Arrow */}
             {step.activeObjects && step.activeObjects.length > 0 && (
               <div className="flex items-center gap-3">
                 <div className="flex-1 border-t border-dashed border-emerald-500/30" />
                 <div className="px-2 text-xs text-emerald-500/60">
-                  instansiasi ▼
+                  instantiate ▼
                 </div>
                 <div className="flex-1 border-t border-dashed border-emerald-500/30" />
               </div>
             )}
 
+            {/* Object instances */}
             {step.objectState && (
               <div className="flex flex-col gap-3">
                 <p className="text-xs tracking-wider text-slate-500 uppercase">
-                  Instance Objek
+                  Instance Object
                 </p>
                 <div className="grid grid-cols-1 gap-3">
                   {Object.entries(step.objectState).map(([name, fields]) => (
@@ -1013,27 +1065,28 @@ export default function ClassObjectPage() {
               </div>
             )}
 
+            {/* Concept explanation */}
             <div className="rounded-xl border border-slate-800 bg-slate-900/50 p-4">
               <p className="mb-2 text-xs tracking-wider text-slate-500 uppercase">
-                Konsep Utama
+                Konsep Kunci
               </p>
               <div className="grid grid-cols-2 gap-2">
                 {[
                   {
-                    label: 'Kelas',
+                    label: 'Class',
                     desc: 'Blueprint / Template',
                     icon: '📋',
                     color: 'text-sky-400',
                   },
                   {
-                    label: 'Objek',
+                    label: 'Object',
                     desc: 'Instance di memori',
                     icon: '📦',
                     color: 'text-emerald-400',
                   },
                   {
-                    label: 'Atribut',
-                    desc: 'Data / Status',
+                    label: 'Attribute',
+                    desc: 'Data / State',
                     icon: '🏷',
                     color: 'text-amber-400',
                   },

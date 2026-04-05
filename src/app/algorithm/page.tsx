@@ -6,7 +6,7 @@ import { Label } from '@/components/ui/label';
 import { Slider } from '@/components/ui/slider';
 import { cn } from '@/lib/utils';
 import Link from 'next/link';
-import { useCallback, useEffect, useState } from 'react';
+import { useCallback, useEffect, useRef, useState } from 'react';
 import { toast } from 'sonner';
 
 // ─── Types ───────────────────────────────────────────────────────────────────
@@ -686,11 +686,14 @@ export default function AlgorithmVisualizer() {
       scale: '',
     };
   };
+  const hasShown = useRef(false);
 
   useEffect(() => {
+    if (hasShown.current) return;
+
+    hasShown.current = true;
     toast.info('Disarankan menggunakan device desktop');
   }, []);
-
   return (
     <div className="min-h-screen bg-[#0d1117] font-mono text-slate-200">
       {/* Header */}

@@ -3,7 +3,7 @@
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import Link from 'next/link';
-import { useEffect, useRef, useState } from 'react';
+import { useCallback, useEffect, useRef, useState } from 'react';
 import { toast } from 'sonner';
 
 // ─── Types ────────────────────────────────────────────────────────────────────
@@ -53,27 +53,28 @@ const ERRORS: ErrorDef[] = [
     label: 'NullPointerException',
     category: 'RuntimeException',
     accent: '#f87171',
-    description: 'Dilempar saat mengakses anggota dari referensi objek null.',
+    description:
+      'Muncul saat kamu akses anggota dari objek yang nilainya null.',
     impact:
-      'Error runtime Java paling umum — selalu cek null sebelum digunakan.',
+      'Error runtime paling umum di Java — selalu cek null sebelum pakai!',
     examples: [
       {
-        title: 'Objek User Null',
+        title: 'Null User Object',
         realWorld: 'E-Commerce: Sesi Pengguna Kedaluwarsa',
         realWorldDetail:
-          'Sesi pengguna kedaluwarsa, tapi kode mencoba mengakses user.getName() untuk menampilkan profil. Objek sesi null → NPE mencrash halaman.',
+          'Sesi user kedaluwarsa, tapi kode masih mencoba akses user.getName() untuk tampilkan profil. Objek session null → NPE crash halamannya.',
         code: [
           'public class UserService {',
           '    public String getUserName(User user) {',
           '        try {',
-          '            String name = user.getName(); // user bisa null!',
-          '            System.out.println("Pengguna: " + name);',
+          '            String name = user.getName(); // user could be null!',
+          '            System.out.println("User: " + name);',
           '            return name;',
           '        } catch (NullPointerException e) {',
-          '            System.out.println("ERROR: User null - " + e.getMessage());',
-          '            return "Tamu";',
+          '            System.out.println("ERROR: User is null - " + e.getMessage());',
+          '            return "Guest";',
           '        } finally {',
-          '            System.out.println("getUserName() selesai.");',
+          '            System.out.println("getUserName() finished.");',
           '        }',
           '    }',
           '}',
@@ -82,20 +83,20 @@ const ERRORS: ErrorDef[] = [
           {
             lineIndex: 1,
             phase: 'normal',
-            description: 'Method dipanggil dengan user = null',
+            description: 'Method called with user = null',
             stateVars: { user: 'null' },
           },
           {
             lineIndex: 2,
             phase: 'try',
-            description: 'Masuk blok try',
+            description: 'Enter try block',
             stateVars: { user: 'null' },
           },
           {
             lineIndex: 3,
             phase: 'throw',
             description:
-              'user.getName() → user null! NullPointerException dilempar!',
+              'user.getName() → user is null! NullPointerException thrown!',
             stateVars: { user: 'null', error: 'NPE!' },
             consoleOutput: '',
             isError: true,
@@ -103,47 +104,46 @@ const ERRORS: ErrorDef[] = [
           {
             lineIndex: 6,
             phase: 'catch',
-            description: 'NullPointerException ditangkap di blok catch',
+            description: 'Caught NullPointerException in catch block',
             stateVars: { e: 'NullPointerException' },
             consoleOutput:
-              'ERROR: User null - Cannot invoke "User.getName()" because "user" is null',
+              'ERROR: User is null - Cannot invoke "User.getName()" because "user" is null',
           },
           {
             lineIndex: 7,
             phase: 'catch',
-            description: "Kembalikan nilai default 'Tamu'",
-            stateVars: { result: '"Tamu"' },
+            description: "Return default value 'Guest'",
+            stateVars: { result: '"Guest"' },
           },
           {
             lineIndex: 9,
             phase: 'finally',
-            description: 'Blok finally selalu dieksekusi',
-            consoleOutput: 'getUserName() selesai.',
+            description: 'Finally block always executes',
+            consoleOutput: 'getUserName() finished.',
           },
           {
             lineIndex: 11,
             phase: 'recovered',
-            description:
-              "Method mengembalikan 'Tamu' dengan aman — tidak crash!",
-            stateVars: { dikembalikan: '"Tamu"' },
+            description: "Method returns 'Guest' safely — no crash!",
+            stateVars: { returned: '"Guest"' },
           },
         ],
       },
       {
-        title: 'Koleksi Null',
+        title: 'Null Collection',
         realWorld: 'Perbankan: Daftar Akun Kosong',
         realWorldDetail:
-          'API mengembalikan null alih-alih list kosong saat tidak ada akun. Memanggil .size() pada null mencrash modul transaksi.',
+          'API mengembalikan null bukan list kosong ketika tidak ada akun. Memanggil .size() pada null crash modul transaksi.',
         code: [
           'public class AccountService {',
           '    public int countAccounts(List<Account> accounts) {',
           '        try {',
-          '            return accounts.size(); // accounts bisa null!',
+          '            return accounts.size(); // accounts might be null!',
           '        } catch (NullPointerException e) {',
-          '            System.out.println("List akun null: " + e.getMessage());',
+          '            System.out.println("Accounts list is null: " + e.getMessage());',
           '            return 0;',
           '        } finally {',
-          '            System.out.println("countAccounts() selesai.");',
+          '            System.out.println("countAccounts() done.");',
           '        }',
           '    }',
           '}',
@@ -152,20 +152,20 @@ const ERRORS: ErrorDef[] = [
           {
             lineIndex: 1,
             phase: 'normal',
-            description: 'Dipanggil dengan accounts = null',
+            description: 'Called with accounts = null',
             stateVars: { accounts: 'null' },
           },
           {
             lineIndex: 2,
             phase: 'try',
-            description: 'Masuk blok try',
+            description: 'Enter try block',
             stateVars: {},
           },
           {
             lineIndex: 3,
             phase: 'throw',
             description:
-              'accounts.size() → NPE! Tidak bisa memanggil method pada list null',
+              "accounts.size() → NPE! Can't call method on null list",
             stateVars: { accounts: 'null' },
             consoleOutput: '',
             isError: true,
@@ -173,41 +173,41 @@ const ERRORS: ErrorDef[] = [
           {
             lineIndex: 4,
             phase: 'catch',
-            description: 'Tangkap NullPointerException',
+            description: 'Catch NullPointerException',
             stateVars: { e: 'NPE' },
             consoleOutput:
-              'List akun null: Cannot invoke "List.size()" because "accounts" is null',
+              'Accounts list is null: Cannot invoke "List.size()" because "accounts" is null',
           },
           {
             lineIndex: 7,
             phase: 'finally',
-            description: 'Finally berjalan tanpa peduli apapun',
-            consoleOutput: 'countAccounts() selesai.',
+            description: 'Finally runs regardless',
+            consoleOutput: 'countAccounts() done.',
           },
           {
             lineIndex: 10,
             phase: 'recovered',
-            description: 'Mengembalikan 0 dengan aman',
-            stateVars: { dikembalikan: '0' },
+            description: 'Returns 0 safely',
+            stateVars: { returned: '0' },
           },
         ],
       },
       {
-        title: 'Null Berantai',
-        realWorld: 'Sistem HRD: Departemen Karyawan Tidak Ada',
+        title: 'Chained Null',
+        realWorld: 'Sistem HR: Departemen Karyawan Kosong',
         realWorldDetail:
-          'employee.getDepartment().getManager().getName() — setiap tautan dalam rantai ini bisa null dan menyebabkan NPE dalam perhitungan gaji.',
+          'employee.getDepartment().getManager().getName() — tautan mana pun dalam rantai ini bisa null dan menyebabkan NPE di kalkulasi gaji.',
         code: [
           'public class HRService {',
           '    public String getManagerName(Employee emp) {',
           '        try {',
-          '            // Panggilan berantai berbahaya!',
+          '            // Dangerous chained call!',
           '            return emp.getDepartment().getManager().getName();',
           '        } catch (NullPointerException e) {',
-          '            System.out.println("Null di rantai: " + e.getMessage());',
-          '            return "Tidak Ada Manajer";',
+          '            System.out.println("Null in chain: " + e.getMessage());',
+          '            return "No Manager";',
           '        } finally {',
-          '            System.out.println("getManagerName() selesai.");',
+          '            System.out.println("getManagerName() finished.");',
           '        }',
           '    }',
           '}',
@@ -216,21 +216,20 @@ const ERRORS: ErrorDef[] = [
           {
             lineIndex: 1,
             phase: 'normal',
-            description:
-              'Dipanggil dengan emp.getDepartment() mengembalikan null',
+            description: 'Called with emp.getDepartment() returning null',
             stateVars: { 'emp.dept': 'null' },
           },
           {
             lineIndex: 2,
             phase: 'try',
-            description: 'Masuk blok try',
+            description: 'Enter try block',
             stateVars: {},
           },
           {
             lineIndex: 4,
             phase: 'throw',
             description:
-              'emp.getDepartment() = null → .getManager() melempar NPE!',
+              'emp.getDepartment() = null → .getManager() throws NPE!',
             stateVars: { 'getDepartment()': 'null' },
             consoleOutput: '',
             isError: true,
@@ -238,21 +237,21 @@ const ERRORS: ErrorDef[] = [
           {
             lineIndex: 5,
             phase: 'catch',
-            description: 'Tangkap NPE berantai',
+            description: 'Catch the chained NPE',
             consoleOutput:
-              'Null di rantai: Cannot invoke "Department.getManager()" because getDepartment() returned null',
+              'Null in chain: Cannot invoke "Department.getManager()" because getDepartment() returned null',
           },
           {
             lineIndex: 8,
             phase: 'finally',
-            description: 'Finally selalu berjalan',
-            consoleOutput: 'getManagerName() selesai.',
+            description: 'Finally always runs',
+            consoleOutput: 'getManagerName() finished.',
           },
           {
             lineIndex: 11,
             phase: 'recovered',
-            description: "Mengembalikan 'Tidak Ada Manajer' dengan aman",
-            stateVars: { dikembalikan: '"Tidak Ada Manajer"' },
+            description: "Returns 'No Manager' safely",
+            stateVars: { returned: '"No Manager"' },
           },
         ],
       },
@@ -263,26 +262,26 @@ const ERRORS: ErrorDef[] = [
     label: 'ArrayIndexOutOfBounds',
     category: 'RuntimeException',
     accent: '#fb923c',
-    description:
-      'Dilempar saat mengakses array dengan indeks yang tidak valid.',
-    impact: 'Umum dalam loop — selalu validasi indeks < array.length.',
+    description: 'Muncul saat akses array dengan index yang tidak valid.',
+    impact:
+      'Sering terjadi di dalam loop — selalu validasi index < array.length.',
     examples: [
       {
-        title: 'Loop Melebihi Batas',
+        title: 'Loop Overflow',
         realWorld: 'Pemrosesan Data: Parser CSV',
         realWorldDetail:
-          'CSV punya 10 kolom tapi kode mencoba mengakses kolom ke-11 (indeks 10) karena off-by-one dalam loop — mencrash pipeline import.',
+          'CSV punya 10 kolom tapi kode mencoba akses kolom ke-11 (index 10) karena off-by-one di loop — crash pipeline import.',
         code: [
           'public class CSVParser {',
           '    public void parseRow(String[] columns) {',
           '        try {',
-          '            for (int i = 0; i <= columns.length; i++) { // BUG: harusnya <',
+          '            for (int i = 0; i <= columns.length; i++) { // BUG: should be <',
           '                System.out.println(columns[i]);',
           '            }',
           '        } catch (ArrayIndexOutOfBoundsException e) {',
-          '            System.out.println("Error indeks: " + e.getMessage());',
+          '            System.out.println("Index error: " + e.getMessage());',
           '        } finally {',
-          '            System.out.println("parseRow() selesai.");',
+          '            System.out.println("parseRow() done.");',
           '        }',
           '    }',
           '}',
@@ -291,13 +290,13 @@ const ERRORS: ErrorDef[] = [
           {
             lineIndex: 1,
             phase: 'normal',
-            description: 'parseRow dipanggil dengan array 3 elemen',
+            description: 'parseRow called with 3-element array',
             stateVars: { 'columns.length': '3' },
           },
           {
             lineIndex: 2,
             phase: 'try',
-            description: 'Masuk blok try',
+            description: 'Enter try block',
             stateVars: {},
           },
           {
@@ -325,26 +324,26 @@ const ERRORS: ErrorDef[] = [
             lineIndex: 4,
             phase: 'throw',
             description:
-              'i=3 (= length!) → columns[3] tidak ada → AIOOBE dilempar!',
+              "i=3 (= length!) → columns[3] doesn't exist → AIOOBE thrown!",
             stateVars: { i: '3', 'columns.length': '3' },
             isError: true,
           },
           {
             lineIndex: 6,
             phase: 'catch',
-            description: 'Tangkap ArrayIndexOutOfBoundsException',
-            consoleOutput: 'Error indeks: Index 3 out of bounds for length 3',
+            description: 'Catch ArrayIndexOutOfBoundsException',
+            consoleOutput: 'Index error: Index 3 out of bounds for length 3',
           },
           {
             lineIndex: 8,
             phase: 'finally',
-            description: 'Finally berjalan',
-            consoleOutput: 'parseRow() selesai.',
+            description: 'Finally runs',
+            consoleOutput: 'parseRow() done.',
           },
           {
             lineIndex: 11,
             phase: 'recovered',
-            description: 'Exception ditangani — tidak crash',
+            description: 'Exception handled — no crash',
             stateVars: {},
           },
         ],
@@ -356,26 +355,26 @@ const ERRORS: ErrorDef[] = [
     label: 'NumberFormatException',
     category: 'RuntimeException',
     accent: '#fbbf24',
-    description: 'Dilempar saat parsing string yang bukan angka valid.',
-    impact: 'Selalu validasi input pengguna sebelum parsing ke Integer/Double.',
+    description: 'Muncul saat parsing string yang bukan angka valid.',
+    impact: 'Selalu validasi input user sebelum parsing ke Integer/Double.',
     examples: [
       {
-        title: 'Input Pengguna Tidak Valid',
-        realWorld: 'Form Web: Validasi Field Umur',
+        title: 'Invalid User Input',
+        realWorld: 'Form Web: Validasi Field Usia',
         realWorldDetail:
-          "Pengguna mengetik 'dua puluh' alih-alih '20' di field umur. Integer.parseInt('dua puluh') mencrash endpoint pendaftaran.",
+          "User ketik 'dua puluh' bukan '20' di field usia. Integer.parseInt('dua puluh') crash endpoint registrasi.",
         code: [
           'public class RegistrationService {',
           '    public int parseAge(String ageInput) {',
           '        try {',
           '            int age = Integer.parseInt(ageInput);',
-          '            System.out.println("Umur berhasil diparse: " + age);',
+          '            System.out.println("Age parsed: " + age);',
           '            return age;',
           '        } catch (NumberFormatException e) {',
-          '            System.out.println("Umur tidak valid: \'" + ageInput + "\' - " + e.getMessage());',
+          '            System.out.println("Invalid age: \'" + ageInput + "\' - " + e.getMessage());',
           '            return -1;',
           '        } finally {',
-          '            System.out.println("parseAge() selesai.");',
+          '            System.out.println("parseAge() finished.");',
           '        }',
           '    }',
           '}',
@@ -384,41 +383,41 @@ const ERRORS: ErrorDef[] = [
           {
             lineIndex: 1,
             phase: 'normal',
-            description: 'parseAge dipanggil dengan ageInput = "dua puluh"',
-            stateVars: { ageInput: '"dua puluh"' },
+            description: 'parseAge called with ageInput = "twenty"',
+            stateVars: { ageInput: '"twenty"' },
           },
           {
             lineIndex: 2,
             phase: 'try',
-            description: 'Masuk blok try',
+            description: 'Enter try block',
             stateVars: {},
           },
           {
             lineIndex: 3,
             phase: 'throw',
             description:
-              'Integer.parseInt("dua puluh") → bukan integer valid! NumberFormatException dilempar!',
-            stateVars: { ageInput: '"dua puluh"' },
+              'Integer.parseInt("twenty") → not a valid integer! NumberFormatException thrown!',
+            stateVars: { ageInput: '"twenty"' },
             isError: true,
           },
           {
             lineIndex: 6,
             phase: 'catch',
-            description: 'Tangkap NumberFormatException',
+            description: 'Catch NumberFormatException',
             consoleOutput:
-              'Umur tidak valid: \'dua puluh\' - For input string: "dua puluh"',
+              'Invalid age: \'twenty\' - For input string: "twenty"',
           },
           {
             lineIndex: 9,
             phase: 'finally',
-            description: 'Finally berjalan',
-            consoleOutput: 'parseAge() selesai.',
+            description: 'Finally runs',
+            consoleOutput: 'parseAge() finished.',
           },
           {
             lineIndex: 12,
             phase: 'recovered',
-            description: 'Mengembalikan -1 sebagai nilai sentinel',
-            stateVars: { dikembalikan: '-1' },
+            description: 'Returns -1 as sentinel value',
+            stateVars: { returned: '-1' },
           },
         ],
       },
@@ -430,26 +429,26 @@ const ERRORS: ErrorDef[] = [
     category: 'RuntimeException',
     accent: '#a78bfa',
     description:
-      'Dilempar untuk error aritmatika, paling umum pembagian dengan nol.',
+      'Muncul untuk error aritmatika, paling sering pembagian dengan nol.',
     impact: 'Validasi pembagi sebelum melakukan operasi pembagian.',
     examples: [
       {
-        title: 'Pembagian Dengan Nol',
+        title: 'Division By Zero',
         realWorld: 'Aplikasi Keuangan: Kalkulator Rata-rata',
         realWorldDetail:
-          'Menghitung rata-rata pengeluaran per hari, tapi bulan tidak ada transaksi. Membagi total dengan 0 mencrash dashboard analitik.',
+          'Menghitung rata-rata pengeluaran per hari, tapi bulan ini ada 0 transaksi. Bagi total dengan 0 crash dashboard analitik.',
         code: [
           'public class FinanceService {',
           '    public double calcAverage(int total, int count) {',
           '        try {',
-          '            double avg = total / count; // count bisa 0!',
-          '            System.out.println("Rata-rata: " + avg);',
+          '            double avg = total / count; // count could be 0!',
+          '            System.out.println("Average: " + avg);',
           '            return avg;',
           '        } catch (ArithmeticException e) {',
-          '            System.out.println("Error matematika: " + e.getMessage());',
+          '            System.out.println("Math error: " + e.getMessage());',
           '            return 0.0;',
           '        } finally {',
-          '            System.out.println("calcAverage() selesai.");',
+          '            System.out.println("calcAverage() done.");',
           '        }',
           '    }',
           '}',
@@ -458,13 +457,13 @@ const ERRORS: ErrorDef[] = [
           {
             lineIndex: 1,
             phase: 'normal',
-            description: 'Dipanggil dengan total=500, count=0',
+            description: 'Called with total=500, count=0',
             stateVars: { total: '500', count: '0' },
           },
           {
             lineIndex: 2,
             phase: 'try',
-            description: 'Masuk blok try',
+            description: 'Enter try block',
             stateVars: {},
           },
           {
@@ -478,20 +477,20 @@ const ERRORS: ErrorDef[] = [
           {
             lineIndex: 6,
             phase: 'catch',
-            description: 'Tangkap ArithmeticException',
-            consoleOutput: 'Error matematika: / by zero',
+            description: 'Catch ArithmeticException',
+            consoleOutput: 'Math error: / by zero',
           },
           {
             lineIndex: 9,
             phase: 'finally',
-            description: 'Finally dieksekusi',
-            consoleOutput: 'calcAverage() selesai.',
+            description: 'Finally executes',
+            consoleOutput: 'calcAverage() done.',
           },
           {
             lineIndex: 12,
             phase: 'recovered',
-            description: 'Mengembalikan 0.0 dengan aman',
-            stateVars: { dikembalikan: '0.0' },
+            description: 'Returns 0.0 safely',
+            stateVars: { returned: '0.0' },
           },
         ],
       },
@@ -502,27 +501,26 @@ const ERRORS: ErrorDef[] = [
     label: 'ClassCastException',
     category: 'RuntimeException',
     accent: '#38bdf8',
-    description:
-      'Dilempar saat mencoba cast objek ke tipe yang tidak kompatibel.',
+    description: 'Muncul saat cast objek ke tipe yang tidak kompatibel.',
     impact:
-      'Gunakan instanceof sebelum casting untuk memverifikasi kompatibilitas tipe.',
+      'Gunakan instanceof sebelum cast untuk verifikasi kompatibilitas tipe.',
     examples: [
       {
-        title: 'Cast Tipe Tidak Valid',
-        realWorld: 'Sistem Inventaris: Ketidakcocokan Tipe Produk',
+        title: 'Invalid Type Cast',
+        realWorld: 'Sistem Inventaris: Tipe Produk Tidak Cocok',
         realWorldDetail:
-          'List Produk generik berisi Electronics dan Clothing. Melakukan cast objek Clothing ke Electronics mencrash laporan inventaris.',
+          'List Product generik berisi Electronics dan Clothing. Cast objek Clothing ke Electronics crash laporan inventaris.',
         code: [
           'public class InventoryService {',
           '    public void processProduct(Object product) {',
           '        try {',
-          '            Electronics elec = (Electronics) product; // cast tidak aman!',
+          '            Electronics elec = (Electronics) product; // unsafe cast!',
           '            elec.getWarrantyPeriod();',
           '        } catch (ClassCastException e) {',
-          '            System.out.println("Cast gagal: " + e.getMessage());',
-          '            System.out.println("Gunakan instanceof sebelum casting!");',
+          '            System.out.println("Cast failed: " + e.getMessage());',
+          '            System.out.println("Use instanceof before casting!");',
           '        } finally {',
-          '            System.out.println("processProduct() selesai.");',
+          '            System.out.println("processProduct() done.");',
           '        }',
           '    }',
           '}',
@@ -531,46 +529,46 @@ const ERRORS: ErrorDef[] = [
           {
             lineIndex: 1,
             phase: 'normal',
-            description: 'product sebenarnya adalah instance Clothing',
+            description: 'product is actually a Clothing instance',
             stateVars: { 'product.type': 'Clothing' },
           },
           {
             lineIndex: 2,
             phase: 'try',
-            description: 'Masuk blok try',
+            description: 'Enter try block',
             stateVars: {},
           },
           {
             lineIndex: 3,
             phase: 'throw',
             description:
-              '(Electronics) Clothing → tipe tidak kompatibel! ClassCastException dilempar!',
-            stateVars: { aktual: 'Clothing', diharapkan: 'Electronics' },
+              '(Electronics) Clothing → incompatible types! ClassCastException thrown!',
+            stateVars: { actual: 'Clothing', expected: 'Electronics' },
             isError: true,
           },
           {
             lineIndex: 5,
             phase: 'catch',
-            description: 'Tangkap ClassCastException',
+            description: 'Catch ClassCastException',
             consoleOutput:
-              'Cast gagal: class Clothing cannot be cast to class Electronics',
+              'Cast failed: class Clothing cannot be cast to class Electronics',
           },
           {
             lineIndex: 6,
             phase: 'catch',
-            description: 'Sarankan penggunaan instanceof',
-            consoleOutput: 'Gunakan instanceof sebelum casting!',
+            description: 'Advise to use instanceof',
+            consoleOutput: 'Use instanceof before casting!',
           },
           {
             lineIndex: 8,
             phase: 'finally',
-            description: 'Finally berjalan',
-            consoleOutput: 'processProduct() selesai.',
+            description: 'Finally runs',
+            consoleOutput: 'processProduct() done.',
           },
           {
             lineIndex: 11,
             phase: 'recovered',
-            description: 'Exception ditangani dengan baik',
+            description: 'Exception handled gracefully',
             stateVars: {},
           },
         ],
@@ -583,27 +581,27 @@ const ERRORS: ErrorDef[] = [
     category: 'Error',
     accent: '#ec4899',
     description:
-      'Dilempar saat kedalaman call stack melebihi batas (biasanya rekursi tak terbatas).',
-    impact: 'Selalu definisikan kasus dasar dalam fungsi rekursif.',
+      'Muncul saat kedalaman call stack melebihi batas (biasanya rekursi tak terbatas).',
+    impact: 'Selalu definisikan base case di fungsi rekursif!',
     examples: [
       {
-        title: 'Rekursi Tak Terbatas',
-        realWorld: 'Pemuat Konfigurasi: Referensi Sirkular',
+        title: 'Infinite Recursion',
+        realWorld: 'Config Loader: Referensi Melingkar',
         realWorldDetail:
-          'ConfigA memuat ConfigB yang memuat ConfigA lagi — loop tak terbatas dalam resolusi konfigurasi mencrash server saat startup.',
+          'ConfigA load ConfigB yang load ConfigA lagi — loop tak terbatas di resolusi config crash server saat startup.',
         code: [
           'public class ConfigLoader {',
           '    public Config load(String name) {',
-          '        // Tidak ada kasus dasar!',
-          '        Config dep = load(name); // memanggil dirinya sendiri selamanya!',
+          '        // Missing base case!',
+          '        Config dep = load(name); // calls itself forever!',
           '        return dep;',
           '    }',
           '    public Config loadSafe(String name, int depth) {',
           '        try {',
-          '            if (depth > 100) throw new RuntimeException("Terlalu dalam!");',
+          '            if (depth > 100) throw new RuntimeException("Too deep!");',
           '            return loadSafe(name, depth + 1);',
           '        } catch (StackOverflowError e) {',
-          '            System.out.println("Stack overflow! Tambahkan kasus dasar.");',
+          '            System.out.println("Stack overflow! Add base case.");',
           '            return Config.defaultConfig();',
           '        }',
           '    }',
@@ -613,46 +611,46 @@ const ERRORS: ErrorDef[] = [
           {
             lineIndex: 1,
             phase: 'normal',
-            description: "loadSafe('app', 0) dipanggil",
+            description: "loadSafe('app', 0) called",
             stateVars: { depth: '0', name: '"app"' },
           },
           {
             lineIndex: 7,
             phase: 'try',
-            description: 'Masuk blok try — pengecekan depth OK',
+            description: 'Enter try block — depth check OK',
             stateVars: { depth: '0' },
           },
           {
             lineIndex: 8,
             phase: 'normal',
-            description: 'depth=0 < 100, rekursi dengan depth+1',
+            description: 'depth=0 < 100, recurse with depth+1',
             stateVars: { depth: '0 → 1' },
           },
           {
             lineIndex: 8,
             phase: 'normal',
-            description: 'Merekursi... depth bertambah: 1, 2, 3...100...',
+            description: 'Recursing... depth grows: 1, 2, 3...100...',
             stateVars: { depth: '1..100..' },
           },
           {
             lineIndex: 9,
             phase: 'throw',
             description:
-              'Call stack habis! StackOverflowError dilempar oleh JVM!',
-            stateVars: { depth: 'MAKS', 'call stack': 'PENUH' },
+              'Call stack exhausted! StackOverflowError thrown by JVM!',
+            stateVars: { depth: 'MAX', 'call stack': 'FULL' },
             isError: true,
           },
           {
             lineIndex: 10,
             phase: 'catch',
-            description: 'Tangkap StackOverflowError',
-            consoleOutput: 'Stack overflow! Tambahkan kasus dasar.',
+            description: 'Catch StackOverflowError',
+            consoleOutput: 'Stack overflow! Add base case.',
           },
           {
             lineIndex: 12,
             phase: 'recovered',
-            description: 'Kembalikan konfigurasi default dengan aman',
-            stateVars: { dikembalikan: 'Config.defaultConfig()' },
+            description: 'Return default config safely',
+            stateVars: { returned: 'Config.defaultConfig()' },
           },
         ],
       },
@@ -663,27 +661,27 @@ const ERRORS: ErrorDef[] = [
     label: 'IllegalArgumentException',
     category: 'RuntimeException',
     accent: '#34d399',
-    description: 'Dilempar saat method menerima argumen yang tidak sesuai.',
+    description: 'Muncul saat metode menerima argumen yang tidak sesuai.',
     impact: 'Gunakan untuk validasi input — dokumentasikan argumen yang valid.',
     examples: [
       {
-        title: 'Parameter Tidak Valid',
+        title: 'Invalid Parameter',
         realWorld: 'Payment Gateway: Jumlah Negatif',
         realWorldDetail:
-          'Bug dalam modul refund mengirimkan nilai negatif ke pemroses pembayaran. IAE mencegah pembayaran tidak valid diproses.',
+          'Bug di modul refund mengirim nilai negatif ke payment processor. IAE mencegah pembayaran tidak valid diproses.',
         code: [
           'public class PaymentService {',
           '    public void processPayment(double amount) {',
           '        try {',
           '            if (amount <= 0) {',
           '                throw new IllegalArgumentException(',
-          '                    "Jumlah harus positif: " + amount);',
+          '                    "Amount must be positive: " + amount);',
           '            }',
-          '            System.out.println("Memproses: Rp" + amount);',
+          '            System.out.println("Processing: $" + amount);',
           '        } catch (IllegalArgumentException e) {',
-          '            System.out.println("Pembayaran tidak valid: " + e.getMessage());',
+          '            System.out.println("Invalid payment: " + e.getMessage());',
           '        } finally {',
-          '            System.out.println("processPayment() selesai.");',
+          '            System.out.println("processPayment() done.");',
           '        }',
           '    }',
           '}',
@@ -692,46 +690,45 @@ const ERRORS: ErrorDef[] = [
           {
             lineIndex: 1,
             phase: 'normal',
-            description: 'processPayment dipanggil dengan amount = -50.0',
+            description: 'processPayment called with amount = -50.0',
             stateVars: { amount: '-50.0' },
           },
           {
             lineIndex: 2,
             phase: 'try',
-            description: 'Masuk blok try',
+            description: 'Enter try block',
             stateVars: {},
           },
           {
             lineIndex: 3,
             phase: 'normal',
-            description: 'Cek: amount (-50.0) <= 0? YA',
+            description: 'Check: amount (-50.0) <= 0? YES',
             stateVars: { 'amount <= 0': 'true' },
           },
           {
             lineIndex: 4,
             phase: 'throw',
-            description: 'Lempar IllegalArgumentException secara eksplisit!',
+            description: 'Explicitly throw IllegalArgumentException!',
             stateVars: { amount: '-50.0' },
             isError: true,
           },
           {
             lineIndex: 8,
             phase: 'catch',
-            description: 'Tangkap IllegalArgumentException',
-            consoleOutput:
-              'Pembayaran tidak valid: Jumlah harus positif: -50.0',
+            description: 'Catch IllegalArgumentException',
+            consoleOutput: 'Invalid payment: Amount must be positive: -50.0',
           },
           {
             lineIndex: 10,
             phase: 'finally',
-            description: 'Finally berjalan',
-            consoleOutput: 'processPayment() selesai.',
+            description: 'Finally runs',
+            consoleOutput: 'processPayment() done.',
           },
           {
             lineIndex: 13,
             phase: 'recovered',
-            description: 'Pembayaran ditolak — dana aman',
-            stateVars: { status: 'ditolak' },
+            description: 'Payment rejected — funds safe',
+            stateVars: { status: 'rejected' },
           },
         ],
       },
@@ -748,10 +745,10 @@ const ERRORS: ErrorDef[] = [
       'Operasi file/jaringan selalu berisiko IOException — harus dideklarasikan atau ditangkap.',
     examples: [
       {
-        title: 'File Tidak Ditemukan',
+        title: 'File Not Found',
         realWorld: 'Generator Laporan: Template Hilang',
         realWorldDetail:
-          'Mesin laporan mencoba membaca template.html untuk pembuatan email. Jika file template dihapus atau hilang, IOException mencrash pekerjaan laporan harian.',
+          'Engine laporan mencoba baca template.html untuk generate email. Kalau file template dihapus atau hilang, IOException crash job laporan malam.',
         code: [
           'import java.io.*;',
           'public class ReportService {',
@@ -763,12 +760,12 @@ const ERRORS: ErrorDef[] = [
           '                content.append(line);',
           '            }',
           '        } catch (FileNotFoundException e) {',
-          '            System.out.println("File tidak ada: " + e.getMessage());',
+          '            System.out.println("File missing: " + e.getMessage());',
           '            return "<default>template</default>";',
           '        } catch (IOException e) {',
-          '            System.out.println("Error IO: " + e.getMessage());',
+          '            System.out.println("IO Error: " + e.getMessage());',
           '        } finally {',
-          '            System.out.println("readTemplate() selesai.");',
+          '            System.out.println("readTemplate() done.");',
           '        }',
           '        return content.toString();',
           '    }',
@@ -778,55 +775,54 @@ const ERRORS: ErrorDef[] = [
           {
             lineIndex: 2,
             phase: 'normal',
-            description: "readTemplate dipanggil dengan path = 'template.html'",
+            description: "readTemplate called with path = 'template.html'",
             stateVars: { path: '"template.html"' },
           },
           {
             lineIndex: 3,
             phase: 'normal',
-            description: 'Inisialisasi StringBuilder',
-            stateVars: { content: 'kosong' },
+            description: 'Initialize StringBuilder',
+            stateVars: { content: 'empty' },
           },
           {
             lineIndex: 4,
             phase: 'try',
-            description: 'Try-with-resources: buka FileReader',
+            description: 'Try-with-resources: open FileReader',
             stateVars: { path: '"template.html"' },
           },
           {
             lineIndex: 4,
             phase: 'throw',
             description:
-              'FileNotFoundException! template.html tidak ada di disk',
-            stateVars: { file: 'TIDAK DITEMUKAN' },
+              'FileNotFoundException! template.html does not exist on disk',
+            stateVars: { file: 'NOT FOUND' },
             isError: true,
           },
           {
             lineIndex: 9,
             phase: 'catch',
-            description:
-              'Tangkap FileNotFoundException (yang lebih spesifik duluan)',
+            description: 'Catch FileNotFoundException (more specific first)',
             consoleOutput:
-              'File tidak ada: template.html (No such file or directory)',
+              'File missing: template.html (No such file or directory)',
           },
           {
             lineIndex: 10,
             phase: 'catch',
-            description: 'Kembalikan template default',
-            stateVars: { dikembalikan: '"<default>template</default>"' },
+            description: 'Return default template',
+            stateVars: { returned: '"<default>template</default>"' },
           },
           {
             lineIndex: 14,
             phase: 'finally',
             description:
-              'Finally berjalan — resource ditutup otomatis oleh try-with-resources',
-            consoleOutput: 'readTemplate() selesai.',
+              'Finally runs — resources auto-closed by try-with-resources',
+            consoleOutput: 'readTemplate() done.',
           },
           {
             lineIndex: 17,
             phase: 'recovered',
-            description: 'Layanan melanjutkan dengan template default',
-            stateVars: { status: 'degradasi dengan baik' },
+            description: 'Service continues with default template',
+            stateVars: { status: 'degraded gracefully' },
           },
         ],
       },
@@ -886,15 +882,6 @@ function Terminal({ lines }: { lines: { text: string; isError: boolean }[] }) {
     if (ref.current) ref.current.scrollTop = ref.current.scrollHeight;
   }, [lines]);
 
-  const hasShown = useRef(false);
-
-  useEffect(() => {
-    if (hasShown.current) return;
-
-    hasShown.current = true;
-    toast.info('Disarankan menggunakan device desktop');
-  }, []);
-
   return (
     <div className="flex flex-col overflow-hidden rounded-xl border border-slate-800 bg-[#0a0e14]">
       <div className="flex items-center gap-2 border-b border-slate-800 bg-slate-900/50 px-3 py-2">
@@ -937,6 +924,24 @@ function Terminal({ lines }: { lines: { text: string; isError: boolean }[] }) {
 
 // ─── Main Component ───────────────────────────────────────────────────────────
 
+// ─── Keyboard Hint ────────────────────────────────────────────────────────────
+
+function KeyboardHint() {
+  return (
+    <div className="flex items-center gap-2 rounded-lg border border-slate-800 bg-slate-900/60 px-3 py-1.5 backdrop-blur">
+      <span className="text-xs text-slate-500">Navigasi pakai keyboard:</span>
+      <div className="flex items-center gap-1">
+        <kbd className="inline-flex h-5 w-6 items-center justify-center rounded border border-slate-700 bg-slate-800 font-mono text-xs text-slate-400 shadow-[0_1px_0_rgba(0,0,0,0.4)]">
+          ←
+        </kbd>
+        <kbd className="inline-flex h-5 w-6 items-center justify-center rounded border border-slate-700 bg-slate-800 font-mono text-xs text-slate-400 shadow-[0_1px_0_rgba(0,0,0,0.4)]">
+          →
+        </kbd>
+      </div>
+    </div>
+  );
+}
+
 export default function ExceptionHandlingPage() {
   const [selectedError, setSelectedError] = useState<ErrorDef>(ERRORS[0]);
   const [selectedExampleIdx, setSelectedExampleIdx] = useState(0);
@@ -959,7 +964,9 @@ export default function ExceptionHandlingPage() {
     setTerminalLines([]);
   };
 
-  const handleNext = () => {
+  // ── Keyboard navigation ──────────────────────────────────────────────────
+
+  const handleNext = useCallback(() => {
     if (currentStep < totalSteps - 1) {
       const nextStep = example.steps[currentStep + 1];
       if (
@@ -973,16 +980,25 @@ export default function ExceptionHandlingPage() {
       }
       setCurrentStep((s) => s + 1);
     }
-  };
+  }, [currentStep, totalSteps]);
 
-  const handlePrev = () => {
+  const handlePrev = useCallback(() => {
     if (currentStep > 0) setCurrentStep((s) => s - 1);
-  };
+  }, [currentStep]);
 
   const handleReset = () => {
     setCurrentStep(0);
     setTerminalLines([]);
   };
+
+  useEffect(() => {
+    const onKey = (e: KeyboardEvent) => {
+      if (e.key === 'ArrowRight') handleNext();
+      if (e.key === 'ArrowLeft') handlePrev();
+    };
+    window.addEventListener('keydown', onKey);
+    return () => window.removeEventListener('keydown', onKey);
+  }, [handleNext, handlePrev]);
 
   const catColor =
     selectedError.category === 'Error'
@@ -991,8 +1007,18 @@ export default function ExceptionHandlingPage() {
         ? '#38bdf8'
         : '#fb923c';
 
+  const hasShown = useRef(false);
+
+  useEffect(() => {
+    if (hasShown.current) return;
+
+    hasShown.current = true;
+    toast.info('Disarankan menggunakan device desktop');
+  }, []);
+
   return (
     <div className="flex min-h-screen flex-col bg-[#0d1117] font-mono text-slate-200">
+      {/* Header */}
       <div className="sticky top-0 z-50 border-b border-slate-800 bg-[#0d1117]/95 backdrop-blur">
         <div className="flex flex-wrap items-center justify-between gap-3 px-4 py-3">
           <div className="flex items-center gap-3">
@@ -1003,7 +1029,7 @@ export default function ExceptionHandlingPage() {
             </Link>
             <div>
               <h1 className="text-base leading-none font-bold text-white">
-                Penanganan Exception
+                Exception Handling
               </h1>
               <p className="mt-0.5 text-xs text-slate-500">
                 Tipe Error Java — Visualisasi Interaktif
@@ -1026,8 +1052,9 @@ export default function ExceptionHandlingPage() {
             ))}
           </div>
         </div>
+        {/* Example sub-bar */}
         <div className="flex items-center gap-3 border-t border-slate-800/60 bg-slate-900/30 px-4 py-2">
-          <span className="text-xs text-slate-500">Contoh:</span>
+          <span className="text-xs text-slate-500">Example:</span>
           {selectedError.examples.map((ex, i) => (
             <button
               key={i}
@@ -1057,10 +1084,12 @@ export default function ExceptionHandlingPage() {
         </div>
       </div>
 
+      {/* Split View */}
       <div
         className="grid min-h-0 flex-1 grid-cols-2 gap-0"
         style={{ height: 'calc(100vh - 110px)' }}
       >
+        {/* LEFT: Code Panel */}
         <div className="flex flex-col border-r border-slate-800 bg-[#161b22]">
           <div className="flex items-center justify-between border-b border-slate-800 bg-slate-900/50 px-4 py-2.5">
             <div className="flex items-center gap-2">
@@ -1080,11 +1109,12 @@ export default function ExceptionHandlingPage() {
             </div>
           </div>
 
+          {/* State vars */}
           <div className="flex min-h-[52px] items-center border-b border-slate-800 bg-slate-900/20 px-4 py-2.5">
             {step.stateVars && Object.keys(step.stateVars).length > 0 ? (
               <div className="flex flex-wrap items-center gap-2">
-                <span className="text-xs tracking-wider text-slate-600 uppercase">
-                  Status:
+                <span className="text-xs tracking-wider text-slate-300 uppercase">
+                  State:
                 </span>
                 {Object.entries(step.stateVars).map(([k, v]) => (
                   <div
@@ -1104,12 +1134,13 @@ export default function ExceptionHandlingPage() {
                 ))}
               </div>
             ) : (
-              <p className="text-xs text-slate-600 italic">
+              <p className="text-xs text-slate-300 italic">
                 {step.description}
               </p>
             )}
           </div>
 
+          {/* Code */}
           <div className="flex-1 overflow-auto p-2">
             {example.code.map((line, idx) => {
               const isActive = idx === step.lineIndex;
@@ -1166,10 +1197,12 @@ export default function ExceptionHandlingPage() {
             })}
           </div>
 
+          {/* Terminal */}
           <div className="border-t border-slate-800 bg-slate-900/30 px-4 py-3">
             <Terminal lines={terminalLines} />
           </div>
 
+          {/* Controls */}
           <div className="border-t border-slate-800 bg-slate-900/30 px-4 py-3">
             <div className="mb-2 flex items-center gap-2">
               <div className="h-1.5 flex-1 rounded-full bg-slate-800">
@@ -1184,6 +1217,9 @@ export default function ExceptionHandlingPage() {
                 {currentStep + 1}/{totalSteps}
               </span>
             </div>
+            <div className="mb-2 flex justify-center">
+              <KeyboardHint />
+            </div>
             <div className="flex justify-center gap-2">
               <Button
                 variant="outlined"
@@ -1192,7 +1228,7 @@ export default function ExceptionHandlingPage() {
                 disabled={currentStep === 0}
                 className="h-8 border-slate-700 bg-slate-800 px-3 text-xs text-slate-300 hover:bg-slate-700 disabled:opacity-30"
               >
-                ⏮ Ulang
+                ⏮ Reset
               </Button>
               <Button
                 variant="outlined"
@@ -1201,7 +1237,7 @@ export default function ExceptionHandlingPage() {
                 disabled={currentStep === 0}
                 className="h-8 border-slate-700 bg-slate-800 px-4 text-xs text-slate-300 hover:bg-slate-700 disabled:opacity-30"
               >
-                ← Sebelumnya
+                ← Prev
               </Button>
               <Button
                 variant="outlined"
@@ -1210,12 +1246,13 @@ export default function ExceptionHandlingPage() {
                 disabled={currentStep === totalSteps - 1}
                 className="h-8 border-slate-700 bg-slate-800 px-4 text-xs text-slate-300 hover:bg-slate-700 disabled:opacity-30"
               >
-                Berikutnya →
+                Next →
               </Button>
             </div>
           </div>
         </div>
 
+        {/* RIGHT: Info Panel */}
         <div className="flex flex-col overflow-hidden bg-[#161b22]">
           <div className="flex items-center justify-between border-b border-slate-800 bg-slate-900/50 px-4 py-2.5">
             <div className="flex items-center gap-2">
@@ -1228,10 +1265,16 @@ export default function ExceptionHandlingPage() {
                 exception.info
               </span>
             </div>
-            <span className="text-xs text-slate-500">{step.description}</span>
+          </div>
+
+          <div className="flex min-h-[52px] items-center border-b border-slate-800 bg-slate-900/30 px-4 py-2.5">
+            <p className="text-sm leading-snug text-slate-300">
+              {step.description}
+            </p>
           </div>
 
           <div className="flex flex-1 flex-col gap-4 overflow-auto px-5 py-4">
+            {/* Error info */}
             <div
               className="rounded-xl border p-4"
               style={{
@@ -1270,6 +1313,7 @@ export default function ExceptionHandlingPage() {
               </div>
             </div>
 
+            {/* Real-world scenario */}
             <div className="rounded-xl border border-slate-800 bg-slate-900/50 p-4">
               <p className="mb-2 text-xs tracking-wider text-slate-500 uppercase">
                 Skenario Dunia Nyata
@@ -1282,6 +1326,7 @@ export default function ExceptionHandlingPage() {
               </p>
             </div>
 
+            {/* Flow phases legend */}
             <div className="rounded-xl border border-slate-800 bg-slate-900/50 p-4">
               <p className="mb-3 text-xs tracking-wider text-slate-500 uppercase">
                 Alur Eksekusi
@@ -1317,14 +1362,14 @@ export default function ExceptionHandlingPage() {
                         className={`text-xs ${isCurrentPhase ? 'text-slate-300' : 'text-slate-700'}`}
                       >
                         {ph === 'try'
-                          ? 'Kode yang mungkin melempar'
+                          ? 'Kode yang mungkin lempar exception'
                           : ph === 'throw'
                             ? 'Exception dilempar di sini'
                             : ph === 'catch'
-                              ? 'Tangani exception'
+                              ? 'Tangkap dan handle exception-nya'
                               : ph === 'finally'
-                                ? 'Selalu dieksekusi (pembersihan)'
-                                : 'Program melanjutkan dengan aman'}
+                                ? 'Selalu dijalankan (bersih-bersih)'
+                                : 'Program lanjut dengan aman'}
                       </span>
                     </div>
                   );
@@ -1332,6 +1377,7 @@ export default function ExceptionHandlingPage() {
               </div>
             </div>
 
+            {/* try-catch-finally structure */}
             <div className="rounded-xl border border-slate-800 bg-slate-900/50 p-4">
               <p className="mb-3 text-xs tracking-wider text-slate-500 uppercase">
                 Hierarki Exception Java
@@ -1340,7 +1386,7 @@ export default function ExceptionHandlingPage() {
                 {[
                   { label: 'Throwable', indent: 0, color: '#94a3b8' },
                   {
-                    label: '├── Error (error JVM)',
+                    label: '├── Error (JVM errors)',
                     indent: 1,
                     color: '#ec4899',
                   },

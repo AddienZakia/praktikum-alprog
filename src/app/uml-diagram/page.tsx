@@ -3,7 +3,7 @@
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import Link from 'next/link';
-import { useEffect, useRef, useState } from 'react';
+import { useCallback, useEffect, useRef, useState } from 'react';
 import { toast } from 'sonner';
 
 // ─── Types ────────────────────────────────────────────────────────────────────
@@ -81,8 +81,8 @@ const VIS_COLORS: Record<string, string> = {
 const SCENARIOS: DiagramScenario[] = [
   {
     key: 'simple',
-    title: 'Simple Class',
-    description: 'One class — fields, methods, visibility modifiers',
+    title: 'Class Sederhana',
+    description: 'Satu class — field, method, dan visibility modifier',
     classes: [
       {
         id: 'Person',
@@ -149,7 +149,7 @@ const SCENARIOS: DiagramScenario[] = [
       {
         lineIndex: 0,
         file: 'Person.java',
-        description: 'Class Person — corresponds to the class box in UML',
+        description: 'Class Person — sesuai dengan kotak class di UML',
         phase: 'class',
         highlightClasses: ['Person'],
         highlightRelations: [],
@@ -157,7 +157,8 @@ const SCENARIOS: DiagramScenario[] = [
       {
         lineIndex: 1,
         file: 'Person.java',
-        description: "private name → shown as '- name: String' in UML",
+        description:
+          "private name → ditampilkan sebagai '- name: String' di UML",
         phase: 'field',
         highlightClasses: ['Person'],
         highlightRelations: [],
@@ -184,7 +185,7 @@ const SCENARIOS: DiagramScenario[] = [
       {
         lineIndex: 6,
         file: 'Person.java',
-        description: "public constructor → '+ Person(name,age)' in UML",
+        description: "constructor public → '+ Person(name,age)' di UML",
         phase: 'method',
         highlightClasses: ['Person'],
         highlightRelations: [],
@@ -221,7 +222,7 @@ const SCENARIOS: DiagramScenario[] = [
         lineIndex: 22,
         file: 'Person.java',
         description:
-          "private validate() → '- validate(): boolean' (internal only)",
+          "private validate() → '- validate(): boolean' (hanya untuk internal)",
         phase: 'method',
         highlightClasses: ['Person'],
         highlightRelations: [],
@@ -232,7 +233,7 @@ const SCENARIOS: DiagramScenario[] = [
   {
     key: 'inheritance',
     title: 'Inheritance + Interface',
-    description: 'extends (inheritance) and implements (interface) in UML',
+    description: 'extends (inheritance) dan implements (interface) dalam UML',
     classes: [
       {
         id: 'Drawable',
@@ -416,7 +417,7 @@ const SCENARIOS: DiagramScenario[] = [
         lineIndex: 0,
         file: 'Drawable.java',
         description:
-          'Drawable interface — shown with <<interface>> stereotype in UML',
+          'Interface Drawable — ditampilkan dengan stereotype <<interface>> di UML',
         phase: 'class',
         highlightClasses: ['Drawable'],
         highlightRelations: [],
@@ -424,7 +425,7 @@ const SCENARIOS: DiagramScenario[] = [
       {
         lineIndex: 1,
         file: 'Drawable.java',
-        description: 'draw() — abstract method, shown in italics in UML',
+        description: 'draw() — method abstract, ditampilkan miring di UML',
         phase: 'method',
         highlightClasses: ['Drawable'],
         highlightRelations: [],
@@ -434,7 +435,7 @@ const SCENARIOS: DiagramScenario[] = [
         lineIndex: 0,
         file: 'Shape.java',
         description:
-          'Shape implements Drawable — dashed arrow in UML (implements)',
+          'Shape implements Drawable — panah putus-putus di UML (implements)',
         phase: 'relation',
         highlightClasses: ['Shape', 'Drawable'],
         highlightRelations: ['Shape→Drawable'],
@@ -443,7 +444,7 @@ const SCENARIOS: DiagramScenario[] = [
         lineIndex: 1,
         file: 'Shape.java',
         description:
-          'protected fields — shown as # in UML (accessible to subclasses)',
+          'field protected — ditampilkan sebagai # di UML (bisa diakses subclass)',
         phase: 'field',
         highlightClasses: ['Shape'],
         highlightRelations: [],
@@ -453,7 +454,7 @@ const SCENARIOS: DiagramScenario[] = [
         lineIndex: 8,
         file: 'Shape.java',
         description:
-          'abstract area() — must be implemented by Circle and Rectangle',
+          'abstract area() — harus diimplementasikan oleh Circle dan Rectangle',
         phase: 'method',
         highlightClasses: ['Shape'],
         highlightRelations: [],
@@ -463,7 +464,7 @@ const SCENARIOS: DiagramScenario[] = [
         lineIndex: 0,
         file: 'Circle.java',
         description:
-          'Circle extends Shape — solid arrow in UML (inheritance/extends)',
+          'Circle extends Shape — panah solid di UML (inheritance/extends)',
         phase: 'relation',
         highlightClasses: ['Circle', 'Shape'],
         highlightRelations: ['Circle→Shape'],
@@ -471,7 +472,7 @@ const SCENARIOS: DiagramScenario[] = [
       {
         lineIndex: 1,
         file: 'Circle.java',
-        description: "private radius — Circle's own field",
+        description: 'private radius — field milik Circle sendiri',
         phase: 'field',
         highlightClasses: ['Circle'],
         highlightRelations: [],
@@ -480,7 +481,7 @@ const SCENARIOS: DiagramScenario[] = [
       {
         lineIndex: 8,
         file: 'Circle.java',
-        description: 'Override all abstract methods from Shape + Drawable',
+        description: 'Override semua method abstract dari Shape + Drawable',
         phase: 'method',
         highlightClasses: ['Circle'],
         highlightRelations: ['Circle→Shape', 'Shape→Drawable'],
@@ -490,7 +491,7 @@ const SCENARIOS: DiagramScenario[] = [
         lineIndex: 2,
         file: 'Main.java',
         description:
-          'Polymorphic array — holds both Circle and Rectangle (both ARE Shape)',
+          'Array polimorfik — menampung Circle dan Rectangle (keduanya IS-A Shape)',
         phase: 'class',
         highlightClasses: ['Circle', 'Rectangle', 'Shape'],
         highlightRelations: ['Circle→Shape', 'Rectangle→Shape'],
@@ -498,7 +499,7 @@ const SCENARIOS: DiagramScenario[] = [
       {
         lineIndex: 4,
         file: 'Main.java',
-        description: 's.draw() — polymorphic call on Shape reference',
+        description: 's.draw() — pemanggilan polimorfik pada referensi Shape',
         phase: 'method',
         highlightClasses: ['Circle', 'Rectangle'],
         highlightRelations: [
@@ -511,8 +512,8 @@ const SCENARIOS: DiagramScenario[] = [
   },
   {
     key: 'fullsystem',
-    title: 'Full System — Library',
-    description: 'Association, aggregation, composition, dependency in UML',
+    title: 'Sistem Lengkap — Perpustakaan',
+    description: 'Asosiasi, agregasi, komposisi, dan dependensi dalam UML',
     classes: [
       {
         id: 'Library',
@@ -705,7 +706,7 @@ const SCENARIOS: DiagramScenario[] = [
         lineIndex: 0,
         file: 'Library.java',
         description:
-          'Library — the central class that AGGREGATES Books and Members',
+          'Library — class utama yang MENGAGREGASI Books dan Members',
         phase: 'class',
         highlightClasses: ['Library'],
         highlightRelations: [],
@@ -714,7 +715,7 @@ const SCENARIOS: DiagramScenario[] = [
         lineIndex: 2,
         file: 'Library.java',
         description:
-          'List<Book> — Library HAS MANY Books (aggregation 1..* in UML)',
+          'List<Book> — Library PUNYA BANYAK Books (agregasi 1..* di UML)',
         phase: 'relation',
         highlightClasses: ['Library', 'Book'],
         highlightRelations: ['Library→Book'],
@@ -723,7 +724,7 @@ const SCENARIOS: DiagramScenario[] = [
       {
         lineIndex: 3,
         file: 'Library.java',
-        description: 'List<Member> — Library HAS MANY Members (aggregation)',
+        description: 'List<Member> — Library PUNYA BANYAK Members (agregasi)',
         phase: 'relation',
         highlightClasses: ['Library', 'Member'],
         highlightRelations: ['Library→Member'],
@@ -732,7 +733,7 @@ const SCENARIOS: DiagramScenario[] = [
       {
         lineIndex: 0,
         file: 'Book.java',
-        description: 'Book class — holds isbn, title, copies',
+        description: 'Class Book — menyimpan isbn, title, copies',
         phase: 'class',
         highlightClasses: ['Book'],
         highlightRelations: [],
@@ -740,8 +741,7 @@ const SCENARIOS: DiagramScenario[] = [
       {
         lineIndex: 3,
         file: 'Book.java',
-        description:
-          'private Author author — Book HAS-A Author (association 1→1)',
+        description: 'private Author author — Book HAS-A Author (asosiasi 1→1)',
         phase: 'relation',
         highlightClasses: ['Book', 'Author'],
         highlightRelations: ['Book→Author'],
@@ -750,7 +750,7 @@ const SCENARIOS: DiagramScenario[] = [
       {
         lineIndex: 6,
         file: 'Book.java',
-        description: 'isAvailable() checks copies > 0',
+        description: 'isAvailable() cek copies > 0',
         phase: 'method',
         highlightClasses: ['Book'],
         highlightRelations: [],
@@ -759,7 +759,7 @@ const SCENARIOS: DiagramScenario[] = [
       {
         lineIndex: 0,
         file: 'Loan.java',
-        description: 'Loan — links Book AND Member (association class)',
+        description: 'Loan — menghubungkan Book DAN Member (association class)',
         phase: 'class',
         highlightClasses: ['Loan'],
         highlightRelations: [],
@@ -767,7 +767,7 @@ const SCENARIOS: DiagramScenario[] = [
       {
         lineIndex: 1,
         file: 'Loan.java',
-        description: 'Loan associates to Book — UML: Loan ——→ Book',
+        description: 'Loan berasosiasi ke Book — UML: Loan ——→ Book',
         phase: 'relation',
         highlightClasses: ['Loan', 'Book'],
         highlightRelations: ['Loan→Book'],
@@ -776,7 +776,7 @@ const SCENARIOS: DiagramScenario[] = [
       {
         lineIndex: 2,
         file: 'Loan.java',
-        description: 'Loan associates to Member',
+        description: 'Loan berasosiasi ke Member',
         phase: 'relation',
         highlightClasses: ['Loan', 'Member'],
         highlightRelations: ['Loan→Member'],
@@ -785,7 +785,7 @@ const SCENARIOS: DiagramScenario[] = [
       {
         lineIndex: 6,
         file: 'Loan.java',
-        description: 'isOverdue() — uses Date to check loan state',
+        description: 'isOverdue() — pakai Date untuk cek status pinjaman',
         phase: 'method',
         highlightClasses: ['Loan'],
         highlightRelations: [],
@@ -793,7 +793,7 @@ const SCENARIOS: DiagramScenario[] = [
       {
         lineIndex: 9,
         file: 'Loan.java',
-        description: 'calcFine() — business rule in Loan class',
+        description: 'calcFine() — aturan bisnis di class Loan',
         phase: 'method',
         highlightClasses: ['Loan'],
         highlightRelations: [],
@@ -837,15 +837,6 @@ function UMLDiagram({
     (cls.fields.length > 0 ? cls.fields.length * 18 + 8 : 0) +
     (cls.methods.length > 0 ? cls.methods.length * 18 + 8 : 0) +
     12;
-
-  const hasShown = useRef(false);
-
-  useEffect(() => {
-    if (hasShown.current) return;
-
-    hasShown.current = true;
-    toast.info('Disarankan menggunakan device desktop');
-  }, []);
 
   return (
     <div className="w-full overflow-auto rounded-xl border border-slate-800 bg-[#0d1117]">
@@ -1083,6 +1074,24 @@ function UMLDiagram({
 
 // ─── Main Component ───────────────────────────────────────────────────────────
 
+// ─── Keyboard Hint ────────────────────────────────────────────────────────────
+
+function KeyboardHint() {
+  return (
+    <div className="flex items-center gap-2 rounded-lg border border-slate-800 bg-slate-900/60 px-3 py-1.5 backdrop-blur">
+      <span className="text-xs text-slate-500">Navigasi pakai keyboard:</span>
+      <div className="flex items-center gap-1">
+        <kbd className="inline-flex h-5 w-6 items-center justify-center rounded border border-slate-700 bg-slate-800 font-mono text-xs text-slate-400 shadow-[0_1px_0_rgba(0,0,0,0.4)]">
+          ←
+        </kbd>
+        <kbd className="inline-flex h-5 w-6 items-center justify-center rounded border border-slate-700 bg-slate-800 font-mono text-xs text-slate-400 shadow-[0_1px_0_rgba(0,0,0,0.4)]">
+          →
+        </kbd>
+      </div>
+    </div>
+  );
+}
+
 export default function UMLPage() {
   const [selectedScenario, setSelectedScenario] = useState<DiagramScenario>(
     SCENARIOS[0],
@@ -1104,21 +1113,32 @@ export default function UMLPage() {
     setActiveFile(Object.keys(s.files)[0]);
   };
 
-  const handleNext = () => {
+  // ── Keyboard navigation ──────────────────────────────────────────────────
+
+  const handleNext = useCallback(() => {
     if (currentStep < totalSteps - 1) {
       const next = selectedScenario.steps[currentStep + 1];
       setCurrentStep((s) => s + 1);
       setActiveFile(next.file);
     }
-  };
+  }, [currentStep, totalSteps]);
 
-  const handlePrev = () => {
+  const handlePrev = useCallback(() => {
     if (currentStep > 0) {
       const prev = selectedScenario.steps[currentStep - 1];
       setCurrentStep((s) => s - 1);
       setActiveFile(prev.file);
     }
-  };
+  }, [currentStep]);
+
+  useEffect(() => {
+    const onKey = (e: KeyboardEvent) => {
+      if (e.key === 'ArrowRight') handleNext();
+      if (e.key === 'ArrowLeft') handlePrev();
+    };
+    window.addEventListener('keydown', onKey);
+    return () => window.removeEventListener('keydown', onKey);
+  }, [handleNext, handlePrev]);
 
   const handleClickClass = (id: string) => {
     // Find if any step has this class highlighted
@@ -1146,12 +1166,21 @@ export default function UMLPage() {
     step.phase === 'class'
       ? '□ Class'
       : step.phase === 'relation'
-        ? '↔ Relation'
+        ? '↔ Relasi'
         : step.phase === 'method'
           ? 'ƒ Method'
           : step.phase === 'field'
             ? '• Field'
-            : '▶ Running';
+            : '▶ Berjalan';
+
+  const hasShown = useRef(false);
+
+  useEffect(() => {
+    if (hasShown.current) return;
+
+    hasShown.current = true;
+    toast.info('Disarankan menggunakan device desktop');
+  }, []);
 
   return (
     <div className="flex min-h-screen flex-col bg-[#0d1117] font-mono text-slate-200">
@@ -1169,7 +1198,7 @@ export default function UMLPage() {
                 UML Class Diagram
               </h1>
               <p className="mt-0.5 text-xs text-slate-500">
-                Click diagram elements to jump to code
+                Klik elemen diagram untuk langsung ke kodenya
               </p>
             </div>
           </div>
@@ -1233,7 +1262,7 @@ export default function UMLPage() {
                   variant="outlined"
                   className="border-amber-700 text-xs text-amber-600"
                 >
-                  active: {step.file}
+                  aktif: {step.file}
                 </Badge>
               )}
             </div>
@@ -1243,7 +1272,7 @@ export default function UMLPage() {
           <div className="flex min-h-[52px] items-center border-b border-slate-800 bg-slate-900/20 px-4 py-2.5">
             {step.stateVars && Object.keys(step.stateVars).length > 0 ? (
               <div className="flex flex-wrap items-center gap-2">
-                <span className="text-xs tracking-wider text-slate-600 uppercase">
+                <span className="text-xs tracking-wider text-slate-300 uppercase">
                   UML:
                 </span>
                 {Object.entries(step.stateVars).map(([k, v]) => (
@@ -1260,7 +1289,7 @@ export default function UMLPage() {
                 ))}
               </div>
             ) : (
-              <p className="text-xs text-slate-600 italic">
+              <p className="text-xs text-slate-300 italic">
                 {step.description}
               </p>
             )}
@@ -1321,6 +1350,9 @@ export default function UMLPage() {
                 {currentStep + 1}/{totalSteps}
               </span>
             </div>
+            <div className="mb-2 flex justify-center">
+              <KeyboardHint />
+            </div>
             <div className="flex justify-center gap-2">
               <Button
                 variant="outlined"
@@ -1367,12 +1399,15 @@ export default function UMLPage() {
               </div>
               <span className="ml-2 text-xs text-slate-400">uml.diagram</span>
               <span className="ml-2 text-xs text-slate-600">
-                ← click class to jump to code
+                ← klik class untuk loncat ke kode
               </span>
             </div>
-            <span className="max-w-[260px] text-right text-xs text-slate-500">
+          </div>
+
+          <div className="flex min-h-[52px] items-center border-b border-slate-800 bg-slate-900/30 px-4 py-2.5">
+            <p className="text-sm leading-snug text-slate-300">
               {step.description}
-            </span>
+            </p>
           </div>
 
           <div className="flex flex-1 flex-col gap-4 overflow-auto px-4 py-4">
@@ -1387,7 +1422,7 @@ export default function UMLPage() {
             {/* UML Legend */}
             <div className="rounded-xl border border-slate-800 bg-slate-900/50 p-4">
               <p className="mb-3 text-xs tracking-wider text-slate-500 uppercase">
-                UML Notation Legend
+                Legenda Notasi UML
               </p>
               <div className="grid grid-cols-2 gap-x-6 gap-y-2">
                 {[
@@ -1398,19 +1433,15 @@ export default function UMLPage() {
                   { sym: '——▷', label: 'extends (solid)', color: '#38bdf8' },
                   {
                     sym: '- -▷',
-                    label: 'implements (dashed)',
+                    label: 'implements (putus-putus)',
                     color: '#a78bfa',
                   },
-                  { sym: '——→', label: 'association/uses', color: '#94a3b8' },
-                  {
-                    sym: '◆——',
-                    label: 'aggregation/hasMany',
-                    color: '#fb923c',
-                  },
-                  { sym: '1..*', label: 'multiplicity', color: '#64748b' },
+                  { sym: '——→', label: 'asosiasi/uses', color: '#94a3b8' },
+                  { sym: '◆——', label: 'agregasi/hasMany', color: '#fb923c' },
+                  { sym: '1..*', label: 'multiplisitas', color: '#64748b' },
                   {
                     sym: '«if»',
-                    label: 'interface stereotype',
+                    label: 'stereotype interface',
                     color: '#a78bfa',
                   },
                 ].map((item) => (

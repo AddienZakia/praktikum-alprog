@@ -3,7 +3,7 @@
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import Link from 'next/link';
-import { useEffect, useRef, useState } from 'react';
+import { useCallback, useEffect, useRef, useState } from 'react';
 import { toast } from 'sonner';
 
 type PillarKey =
@@ -53,13 +53,13 @@ interface PillarScenario {
 const PILLARS: PillarScenario[] = [
   {
     key: 'inheritance',
-    label: 'Pewarisan',
-    shortDesc: 'Gunakan ulang kode parent di kelas anak',
+    label: 'Inheritance',
+    shortDesc: 'Pakai ulang kode parent di class anak',
     accent: '#38bdf8',
     definition:
-      'Sebuah kelas (anak) mewarisi field dan method dari kelas lain (parent) menggunakan kata kunci extends.',
+      'Sebuah class (anak) mewarisi field dan method dari class lain (parent) menggunakan kata kunci extends.',
     benefit:
-      'Penggunaan ulang kode — tulis sekali di parent, gunakan di semua anak. Memodelkan hubungan IS-A.',
+      'Reuse kode — tulis sekali di parent, pakai di semua anak. Memodelkan relasi IS-A.',
     classes: [
       {
         name: 'Animal',
@@ -94,8 +94,8 @@ const PILLARS: PillarScenario[] = [
         '        this.age  = age;',
         '    }',
         '',
-        '    public void eat()   { System.out.println(name + " sedang makan"); }',
-        '    public void sleep() { System.out.println(name + " sedang tidur"); }',
+        '    public void eat()   { System.out.println(name + " is eating"); }',
+        '    public void sleep() { System.out.println(name + " is sleeping"); }',
         '',
         '    public void makeSound() {',
         '        System.out.println("..."); // default',
@@ -107,17 +107,17 @@ const PILLARS: PillarScenario[] = [
         '    private String breed;',
         '',
         '    public Dog(String name, int age, String breed) {',
-        '        super(name, age); // panggil constructor parent',
+        '        super(name, age); // call parent constructor',
         '        this.breed = breed;',
         '    }',
         '',
         '    @Override',
         '    public void makeSound() {',
-        '        System.out.println(name + " bilang: Guk!");',
+        '        System.out.println(name + " says: Woof!");',
         '    }',
         '',
         '    public void fetch() {',
-        '        System.out.println(name + " mengambil bola!");',
+        '        System.out.println(name + " fetches the ball!");',
         '    }',
         '}',
       ],
@@ -126,10 +126,10 @@ const PILLARS: PillarScenario[] = [
         '    public static void main(String[] args) {',
         '        Dog d = new Dog("Buddy", 3, "Labrador");',
         '        Cat c = new Cat("Whiskers", 2, true);',
-        '        d.eat();         // diwarisi dari Animal',
-        '        d.makeSound();   // versi Dog yang di-override',
-        '        d.fetch();       // method khusus Dog',
-        '        c.makeSound();   // versi Cat yang di-override',
+        '        d.eat();         // inherited from Animal',
+        "        d.makeSound();   // Dog's overridden version",
+        '        d.fetch();       // Dog-specific method',
+        "        c.makeSound();   // Cat's overridden version",
         '    }',
         '}',
       ],
@@ -138,17 +138,17 @@ const PILLARS: PillarScenario[] = [
       {
         lineIndex: 0,
         file: 'Animal.java',
-        description: 'Animal adalah kelas PARENT (dasar)',
+        description: 'Animal adalah class PARENT (base)',
         phase: 'inherit',
         highlightClasses: ['Animal'],
       },
       {
         lineIndex: 1,
         file: 'Animal.java',
-        description: 'field protected — dapat diakses oleh kelas anak',
+        description: 'field protected — bisa diakses class anak',
         phase: 'normal',
         highlightClasses: ['Animal'],
-        stateVars: { akses: 'protected' },
+        stateVars: { access: 'protected' },
       },
       {
         lineIndex: 12,
@@ -168,16 +168,15 @@ const PILLARS: PillarScenario[] = [
       {
         lineIndex: 4,
         file: 'Dog.java',
-        description:
-          'super(name, age) — memanggil constructor Animal terlebih dahulu',
+        description: 'super(name, age) — panggil constructor Animal duluan',
         phase: 'inherit',
         highlightClasses: ['Animal', 'Dog'],
-        stateVars: { 'super()': 'constructor Animal' },
+        stateVars: { 'super()': 'Animal constructor' },
       },
       {
         lineIndex: 9,
         file: 'Dog.java',
-        description: '@Override — Dog menyediakan makeSound() miliknya sendiri',
+        description: '@Override — Dog punya versi makeSound()-nya sendiri',
         phase: 'override',
         highlightClasses: ['Dog'],
         stateVars: { override: 'makeSound()' },
@@ -185,10 +184,10 @@ const PILLARS: PillarScenario[] = [
       {
         lineIndex: 2,
         file: 'Main.java',
-        description: 'new Dog() — membuat instance Dog (juga IS-A Animal)',
+        description: 'new Dog() — buat instance Dog (juga IS-A Animal)',
         phase: 'inherit',
         highlightClasses: ['Dog'],
-        stateVars: { d: 'Dog@memori' },
+        stateVars: { d: 'Dog@memory' },
       },
       {
         lineIndex: 4,
@@ -197,15 +196,16 @@ const PILLARS: PillarScenario[] = [
           'd.eat() — diwarisi dari Animal! Dog tidak mendefinisikan ini',
         phase: 'inherit',
         highlightClasses: ['Animal', 'Dog'],
-        stateVars: { output: '"Buddy sedang makan"' },
+        stateVars: { output: '"Buddy is eating"' },
       },
       {
         lineIndex: 5,
         file: 'Main.java',
-        description: 'd.makeSound() — versi Dog yang dipanggil (di-override)',
+        description:
+          'd.makeSound() — versi Dog yang dipanggil (sudah di-override)',
         phase: 'override',
         highlightClasses: ['Dog'],
-        stateVars: { output: '"Buddy bilang: Guk!"' },
+        stateVars: { output: '"Buddy says: Woof!"' },
       },
       {
         lineIndex: 6,
@@ -213,19 +213,19 @@ const PILLARS: PillarScenario[] = [
         description: 'd.fetch() — method khusus Dog, Animal tidak punya ini',
         phase: 'normal',
         highlightClasses: ['Dog'],
-        stateVars: { output: '"Buddy mengambil bola!"' },
+        stateVars: { output: '"Buddy fetches the ball!"' },
       },
     ],
   },
   {
     key: 'encapsulation',
-    label: 'Enkapsulasi',
-    shortDesc: 'Sembunyikan data, ekspos melalui method',
+    label: 'Encapsulation',
+    shortDesc: 'Sembunyikan data, expose lewat method',
     accent: '#f87171',
     definition:
-      'Satukan data (field) dan method yang beroperasi pada data menjadi satu unit, menyembunyikan keadaan internal dengan access modifier.',
+      'Satukan data (field) dan method yang mengoperasikan data dalam satu unit, sembunyikan state internal pakai access modifier.',
     benefit:
-      'Perlindungan data — mencegah modifikasi langsung pada field. Akses terkontrol via getter/setter.',
+      'Proteksi data — mencegah modifikasi langsung ke field. Akses terkontrol lewat getter/setter.',
     classes: [
       {
         name: 'BankAccount',
@@ -243,8 +243,8 @@ const PILLARS: PillarScenario[] = [
     files: {
       'BankAccount.java': [
         'public class BankAccount {',
-        '    private double balance; // tersembunyi dari luar!',
-        '    private String pin;     // data sensitif',
+        '    private double balance; // hidden from outside!',
+        '    private String pin;     // sensitive data',
         '    private String owner;',
         '',
         '    public BankAccount(String owner, String pin, double init) {',
@@ -253,28 +253,28 @@ const PILLARS: PillarScenario[] = [
         '        this.balance = init;',
         '    }',
         '',
-        '    // Getter publik — akses baca terkontrol',
+        '    // Public getter — controlled access',
         '    public double getBalance() {',
         '        return balance;',
         '    }',
         '',
-        '    // Setter publik dengan validasi',
+        '    // Public setter with validation',
         '    public void deposit(double amount) {',
         '        if (amount > 0) balance += amount;',
-        '        else System.out.println("Jumlah tidak valid!");',
+        '        else System.out.println("Invalid amount!");',
         '    }',
         '',
         '    public boolean withdraw(double amount, String inputPin) {',
         '        if (!validatePin(inputPin)) {',
-        '            System.out.println("PIN salah!");',
+        '            System.out.println("Wrong PIN!");',
         '            return false;',
         '        }',
-        '        if (amount > balance) { System.out.println("Saldo tidak cukup!"); return false; }',
+        '        if (amount > balance) { System.out.println("Insufficient!"); return false; }',
         '        balance -= amount;',
         '        return true;',
         '    }',
         '',
-        '    private boolean validatePin(String input) { // helper private',
+        '    private boolean validatePin(String input) { // private helper',
         '        return pin.equals(input);',
         '    }',
         '}',
@@ -282,13 +282,13 @@ const PILLARS: PillarScenario[] = [
       'Main.java': [
         'public class Main {',
         '    public static void main(String[] args) {',
-        '        BankAccount acc = new BankAccount("Budi","1234",500.0);',
+        '        BankAccount acc = new BankAccount("Alice","1234",500.0);',
         '        // acc.balance = 9999; // ERROR! private',
         '        // acc.pin = "0000";  // ERROR! private',
         '        acc.deposit(200.0);',
         '        System.out.println(acc.getBalance()); // 700.0',
-        '        acc.withdraw(100.0, "1234");          // PIN benar',
-        '        acc.withdraw(100.0, "9999");          // PIN salah',
+        '        acc.withdraw(100.0, "1234");          // correct PIN',
+        '        acc.withdraw(100.0, "9999");          // wrong PIN',
         '    }',
         '}',
       ],
@@ -298,7 +298,7 @@ const PILLARS: PillarScenario[] = [
         lineIndex: 0,
         file: 'BankAccount.java',
         description:
-          'Kelas BankAccount — mengenkapsulasi semua logika perbankan',
+          'Class BankAccount — mengenkapsulasi semua logika perbankan',
         phase: 'encapsulate',
         highlightClasses: ['BankAccount'],
       },
@@ -313,7 +313,7 @@ const PILLARS: PillarScenario[] = [
       {
         lineIndex: 2,
         file: 'BankAccount.java',
-        description: 'private String pin — sensitif, sepenuhnya tersembunyi',
+        description: 'private String pin — sensitif, tersembunyi sepenuhnya',
         phase: 'encapsulate',
         stateVars: { 'access modifier': 'private' },
       },
@@ -321,22 +321,22 @@ const PILLARS: PillarScenario[] = [
         lineIndex: 12,
         file: 'BankAccount.java',
         description:
-          'public getBalance() — akses BACA terkontrol ke field private',
+          'public getBalance() — akses BACA yang terkontrol ke field private',
         phase: 'encapsulate',
-        stateVars: { pola: 'getter' },
+        stateVars: { pattern: 'getter' },
       },
       {
         lineIndex: 17,
         file: 'BankAccount.java',
         description:
-          'deposit() memvalidasi sebelum mengubah balance — nilai tidak valid tidak bisa masuk!',
+          'deposit() validasi sebelum ubah balance — tidak bisa set nilai tidak valid!',
         phase: 'encapsulate',
-        stateVars: { validasi: 'amount > 0' },
+        stateVars: { validation: 'amount > 0' },
       },
       {
         lineIndex: 22,
         file: 'BankAccount.java',
-        description: 'withdraw() memerlukan PIN — menerapkan aturan bisnis',
+        description: 'withdraw() butuh PIN — menerapkan aturan bisnis',
         phase: 'encapsulate',
         stateVars: { keamanan: 'cek PIN' },
       },
@@ -346,28 +346,26 @@ const PILLARS: PillarScenario[] = [
         description:
           'private validatePin() — helper internal, tersembunyi dari luar',
         phase: 'encapsulate',
-        stateVars: { akses: 'private' },
+        stateVars: { access: 'private' },
       },
       {
         lineIndex: 2,
         file: 'Main.java',
-        description:
-          'Buat akun — constructor adalah satu-satunya cara mengatur keadaan awal',
+        description: 'Buat akun — constructor satu-satunya cara set state awal',
         phase: 'normal',
-        stateVars: { balance: '500.0', owner: '"Budi"' },
+        stateVars: { balance: '500.0', owner: '"Alice"' },
       },
       {
         lineIndex: 3,
         file: 'Main.java',
-        description:
-          'acc.balance = 9999 akan menjadi ERROR KOMPILASI — private!',
+        description: 'acc.balance = 9999 bakal jadi COMPILE ERROR — private!',
         phase: 'encapsulate',
-        stateVars: { ERROR: 'Tidak bisa akses anggota private' },
+        stateVars: { ERROR: 'Cannot access private member' },
       },
       {
         lineIndex: 5,
         file: 'Main.java',
-        description: 'acc.deposit(200.0) — valid, melewati validasi',
+        description: 'acc.deposit(200.0) — valid, melalui validasi',
         phase: 'normal',
         stateVars: { balance: '700.0' },
       },
@@ -376,33 +374,33 @@ const PILLARS: PillarScenario[] = [
         file: 'Main.java',
         description: 'withdraw dengan PIN benar — berhasil',
         phase: 'normal',
-        stateVars: { balance: '600.0', PIN: '✓ benar' },
+        stateVars: { balance: '600.0', PIN: '✓ correct' },
       },
       {
         lineIndex: 8,
         file: 'Main.java',
         description: 'withdraw dengan PIN salah — ditolak oleh validatePin()',
         phase: 'encapsulate',
-        stateVars: { output: '"PIN salah!"', PIN: '✗ salah' },
+        stateVars: { output: '"Wrong PIN!"', PIN: '✗ wrong' },
       },
     ],
   },
   {
     key: 'polymorphism',
-    label: 'Polimorfisme',
-    shortDesc: 'Satu antarmuka, banyak perilaku',
+    label: 'Polymorphism',
+    shortDesc: 'Satu interface, banyak perilaku',
     accent: '#a78bfa',
     definition:
-      'Kemampuan kelas yang berbeda untuk merespons panggilan method yang sama dengan cara mereka sendiri (method overriding + method overloading).',
+      'Kemampuan class yang berbeda untuk merespons pemanggilan method yang sama dengan caranya sendiri (method overriding + overloading).',
     benefit:
-      'Tulis satu antarmuka, tangani banyak tipe objek. Memungkinkan kode yang fleksibel dan mudah diperluas.',
+      'Tulis satu interface, tangani banyak tipe object. Bikin kode fleksibel dan mudah dikembangkan.',
     classes: [
       {
         name: 'Shape',
         kind: 'abstract',
         accent: '#a78bfa',
         fields: ['color: String'],
-        methods: ['draw() ← abstrak', 'area() ← abstrak', 'describe()'],
+        methods: ['draw() ← abstract', 'area() ← abstract', 'describe()'],
       },
       {
         name: 'Circle',
@@ -435,11 +433,11 @@ const PILLARS: PillarScenario[] = [
         '        this.color = color;',
         '    }',
         '',
-        '    public abstract void draw();   // harus di-override',
-        '    public abstract double area(); // harus di-override',
+        '    public abstract void draw();   // must override',
+        '    public abstract double area(); // must override',
         '',
         '    public void describe() {',
-        '        System.out.println(color + " bentuk, luas=" + area());',
+        '        System.out.println(color + " shape, area=" + area());',
         '    }',
         '}',
       ],
@@ -453,7 +451,7 @@ const PILLARS: PillarScenario[] = [
         '    }',
         '',
         '    @Override',
-        '    public void draw()  { System.out.println("Menggambar lingkaran ○"); }',
+        '    public void draw()  { System.out.println("Drawing circle ○"); }',
         '',
         '    @Override',
         '    public double area() { return Math.PI * radius * radius; }',
@@ -463,12 +461,12 @@ const PILLARS: PillarScenario[] = [
         'public class Main {',
         '    public static void main(String[] args) {',
         '        Shape[] shapes = {',
-        '            new Circle("Merah", 5.0),',
-        '            new Rectangle("Biru", 4.0, 3.0),',
-        '            new Triangle("Hijau", 6.0, 4.0)',
+        '            new Circle("Red", 5.0),',
+        '            new Rectangle("Blue", 4.0, 3.0),',
+        '            new Triangle("Green", 6.0, 4.0)',
         '        };',
         '        for (Shape s : shapes) {',
-        '            s.draw();    // panggilan polimorfik!',
+        '            s.draw();    // polymorphic call!',
         '            s.describe();',
         '        }',
         '    }',
@@ -479,24 +477,23 @@ const PILLARS: PillarScenario[] = [
       {
         lineIndex: 0,
         file: 'Shape.java',
-        description: 'abstract class Shape — mendefinisikan antarmuka umum',
+        description: 'abstract class Shape — mendefinisikan interface bersama',
         phase: 'abstract',
         highlightClasses: ['Shape'],
       },
       {
         lineIndex: 7,
         file: 'Shape.java',
-        description:
-          'abstract draw() — setiap bentuk HARUS mengimplementasi ini',
+        description: 'abstract draw() — setiap shape HARUS implementasikan ini',
         phase: 'abstract',
         highlightClasses: ['Shape'],
-        stateVars: { abstrak: 'memaksa override' },
+        stateVars: { abstract: 'memaksa override' },
       },
       {
         lineIndex: 10,
         file: 'Shape.java',
         description:
-          'describe() menggunakan area() — bekerja secara polimorfik untuk SEMUA bentuk',
+          'describe() pakai area() — bekerja polimorfis untuk SEMUA shape',
         phase: 'polymorphic',
         highlightClasses: ['Shape'],
       },
@@ -504,17 +501,17 @@ const PILLARS: PillarScenario[] = [
         lineIndex: 0,
         file: 'Circle.java',
         description:
-          'Circle extends Shape — mewarisi + harus mengimplementasi method abstrak',
+          'Circle extends Shape — mewarisi + harus implementasikan method abstract',
         phase: 'inherit',
         highlightClasses: ['Shape', 'Circle'],
       },
       {
         lineIndex: 8,
         file: 'Circle.java',
-        description: 'Circle.draw() — versi draw() miliknya sendiri',
+        description: 'Circle.draw() — versi draw()-nya sendiri',
         phase: 'polymorphic',
         highlightClasses: ['Circle'],
-        stateVars: { 'draw()': 'versi Circle' },
+        stateVars: { 'draw()': 'Circle version' },
       },
       {
         lineIndex: 11,
@@ -522,71 +519,68 @@ const PILLARS: PillarScenario[] = [
         description: 'Circle.area() — π × r²',
         phase: 'polymorphic',
         highlightClasses: ['Circle'],
-        stateVars: { rumus: 'π × r²' },
+        stateVars: { formula: 'π × r²' },
       },
       {
         lineIndex: 2,
         file: 'Main.java',
         description:
-          'Array Shape — menampung Circle, Rectangle, Triangle (polimorfisme!)',
+          'Array of Shape — menampung Circle, Rectangle, Triangle (polimorfisme!)',
         phase: 'polymorphic',
         highlightClasses: ['Shape', 'Circle', 'Rectangle', 'Triangle'],
-        stateVars: { tipe: 'Shape[] — array polimorfik' },
+        stateVars: { type: 'Shape[] — polymorphic array' },
       },
       {
         lineIndex: 7,
         file: 'Main.java',
         description:
-          'Loop atas shapes — kode sama, perilaku berbeda per tipe objek',
+          'Loop atas shapes — kode sama, perilaku beda per tipe object',
         phase: 'polymorphic',
         highlightClasses: ['Shape'],
       },
       {
         lineIndex: 8,
         file: 'Main.java',
-        description: 's.draw() pada Circle → Circle.draw() dipanggil otomatis!',
+        description: 's.draw() pada Circle → otomatis panggil Circle.draw()!',
         phase: 'polymorphic',
         highlightClasses: ['Circle'],
-        stateVars: {
-          dipanggil: 'Circle.draw()',
-          output: '"Menggambar lingkaran ○"',
-        },
+        stateVars: { called: 'Circle.draw()', output: '"Drawing circle ○"' },
       },
       {
         lineIndex: 8,
         file: 'Main.java',
         description:
-          's.draw() pada Rectangle → Rectangle.draw() dipanggil otomatis!',
+          's.draw() pada Rectangle → otomatis panggil Rectangle.draw()!',
         phase: 'polymorphic',
         highlightClasses: ['Rectangle'],
         stateVars: {
-          dipanggil: 'Rectangle.draw()',
-          output: '"Menggambar persegi □"',
+          called: 'Rectangle.draw()',
+          output: '"Drawing rectangle □"',
         },
       },
       {
         lineIndex: 8,
         file: 'Main.java',
         description:
-          's.draw() pada Triangle → Triangle.draw() dipanggil otomatis!',
+          's.draw() pada Triangle → otomatis panggil Triangle.draw()!',
         phase: 'polymorphic',
         highlightClasses: ['Triangle'],
         stateVars: {
-          dipanggil: 'Triangle.draw()',
-          output: '"Menggambar segitiga △"',
+          called: 'Triangle.draw()',
+          output: '"Drawing triangle △"',
         },
       },
     ],
   },
   {
     key: 'abstraction',
-    label: 'Abstraksi',
-    shortDesc: 'Sembunyikan implementasi, tampilkan antarmuka',
+    label: 'Abstraction',
+    shortDesc: 'Sembunyikan implementasi, tampilkan interface',
     accent: '#fbbf24',
     definition:
-      'Kelas abstrak dan antarmuka mendefinisikan APA yang bisa dilakukan kelas tanpa menentukan BAGAIMANA. Detail implementasi disembunyikan.',
+      'Abstract class dan interface mendefinisikan APA yang bisa dilakukan class tanpa menentukan BAGAIMANA. Detail implementasi disembunyikan.',
     benefit:
-      'Fokus pada yang penting — sembunyikan kerumitan. Menegakkan kontrak yang harus dipenuhi semua subkelas.',
+      'Fokus pada yang penting — sembunyikan kompleksitas. Memaksa kontrak yang harus dipenuhi semua subclass.',
     classes: [
       {
         name: '<<interface>>\\nPaymentGateway',
@@ -612,12 +606,12 @@ const PILLARS: PillarScenario[] = [
     ],
     files: {
       'PaymentGateway.java': [
-        '// Interface — abstraksi murni',
+        '// Interface — pure abstraction',
         'public interface PaymentGateway {',
         '    boolean processPayment(double amount, String currency);',
         '    boolean refund(String transactionId);',
         '    String  getStatus(String transactionId);',
-        '    // Tidak ada implementasi di sini!',
+        '    // No implementation here!',
         '}',
       ],
       'StripePayment.java': [
@@ -630,8 +624,8 @@ const PILLARS: PillarScenario[] = [
         '',
         '    @Override',
         '    public boolean processPayment(double amount, String currency) {',
-        '        System.out.println("Stripe: menagih " + amount + " " + currency);',
-        '        // Logika API khusus Stripe...',
+        '        System.out.println("Stripe: charging " + amount + " " + currency);',
+        '        // Stripe-specific API logic...',
         '        return true;',
         '    }',
         '',
@@ -648,12 +642,12 @@ const PILLARS: PillarScenario[] = [
       'Main.java': [
         'public class Main {',
         '    public static void main(String[] args) {',
-        '        // Gunakan abstraksi — kode ke antarmuka!',
+        '        // Use abstraction — code to the interface!',
         '        PaymentGateway gateway;',
         '',
-        '        // Ganti implementasi dengan mudah:',
+        '        // Swap implementation easily:',
         '        gateway = new StripePayment("sk_live_...");',
-        '        // gateway = new PayPalPayment("client_id"); // juga bisa!',
+        '        // gateway = new PayPalPayment("client_id"); // also works!',
         '',
         '        gateway.processPayment(99.99, "USD");',
         '        gateway.refund("txn_abc123");',
@@ -675,17 +669,17 @@ const PILLARS: PillarScenario[] = [
         lineIndex: 2,
         file: 'PaymentGateway.java',
         description:
-          'processPayment() — dideklarasikan tapi TIDAK ADA implementasi!',
+          'processPayment() — dideklarasikan tapi TIDAK ADA implementasinya!',
         phase: 'abstract',
-        stateVars: { abstraksi: 'hanya tanda tangan' },
+        stateVars: { abstraction: 'hanya tanda tangan' },
       },
       {
         lineIndex: 3,
         file: 'PaymentGateway.java',
         description:
-          'refund() — semua implementor harus menyediakan perilaku ini',
+          'refund() — siapapun yang implement harus sediakan perilaku ini',
         phase: 'abstract',
-        stateVars: { menegakkan: 'semua implementor' },
+        stateVars: { enforces: 'semua implementer' },
       },
       {
         lineIndex: 0,
@@ -699,10 +693,10 @@ const PILLARS: PillarScenario[] = [
         lineIndex: 8,
         file: 'StripePayment.java',
         description:
-          'processPayment() — implementasi khusus Stripe (panggilan API Stripe)',
+          'processPayment() — implementasi khusus Stripe (panggil Stripe API)',
         phase: 'normal',
         highlightClasses: ['StripePayment'],
-        stateVars: { impl: 'API Stripe' },
+        stateVars: { impl: 'Stripe API' },
       },
       {
         lineIndex: 15,
@@ -718,13 +712,13 @@ const PILLARS: PillarScenario[] = [
           'PaymentGateway gateway — dideklarasikan sebagai tipe INTERFACE (abstraksi)',
         phase: 'abstract',
         highlightClasses: ['<<interface>>\\nPaymentGateway'],
-        stateVars: { tipe: 'PaymentGateway (interface)' },
+        stateVars: { type: 'PaymentGateway (interface)' },
       },
       {
         lineIndex: 6,
         file: 'Main.java',
         description:
-          'Assign StripePayment — bisa diganti ke PayPal tanpa mengubah kode lain!',
+          'Assign StripePayment — bisa ganti ke PayPal tanpa ubah kode lain!',
         phase: 'polymorphic',
         highlightClasses: ['StripePayment'],
         stateVars: { gateway: 'StripePayment' },
@@ -733,16 +727,16 @@ const PILLARS: PillarScenario[] = [
         lineIndex: 9,
         file: 'Main.java',
         description:
-          'gateway.processPayment() — pemanggil tidak tahu itu Stripe! Abstraksi bekerja!',
+          'gateway.processPayment() — pemanggil tidak tahu ini Stripe! Abstraksi berhasil!',
         phase: 'abstract',
         highlightClasses: ['StripePayment'],
-        stateVars: { output: '"Stripe: menagih 99.99 USD"' },
+        stateVars: { output: '"Stripe: charging 99.99 USD"' },
       },
       {
         lineIndex: 10,
         file: 'Main.java',
         description:
-          'gateway.refund() — antarmuka sama, bisa ganti ke PayPal kapan saja',
+          'gateway.refund() — interface sama, bisa ganti ke PayPal kapanpun',
         phase: 'abstract',
         stateVars: { output: '"Stripe refund: txn_abc123"' },
       },
@@ -765,7 +759,7 @@ function ClassDiagram({
   return (
     <div className="rounded-xl border border-slate-800 bg-slate-900/30 p-4">
       <p className="mb-3 text-xs tracking-wider text-slate-500 uppercase">
-        Diagram Kelas
+        Class Diagram
       </p>
       <div className="flex flex-col gap-2">
         {classes.map((cls, i) => {
@@ -793,6 +787,7 @@ function ClassDiagram({
                 }`}
                 style={{ borderColor: isActive ? cls.accent : '#1e293b' }}
               >
+                {/* Class name */}
                 <div
                   className="flex items-center gap-2 border-b px-3 py-2"
                   style={{
@@ -819,7 +814,7 @@ function ClassDiagram({
                         color: cls.accent,
                       }}
                     >
-                      abstrak
+                      abstract
                     </span>
                   )}
                   <span
@@ -829,6 +824,7 @@ function ClassDiagram({
                     {cls.name.replace('\\n', ' ')}
                   </span>
                 </div>
+                {/* Fields */}
                 {cls.fields && cls.fields.length > 0 && (
                   <div className="border-b border-slate-800/50 px-3 py-1.5">
                     {cls.fields.map((f) => (
@@ -842,6 +838,7 @@ function ClassDiagram({
                     ))}
                   </div>
                 )}
+                {/* Methods */}
                 {cls.methods && cls.methods.length > 0 && (
                   <div className="px-3 py-1.5">
                     {cls.methods.map((m) => (
@@ -866,6 +863,24 @@ function ClassDiagram({
 
 // ─── Main Component ───────────────────────────────────────────────────────────
 
+// ─── Keyboard Hint ────────────────────────────────────────────────────────────
+
+function KeyboardHint() {
+  return (
+    <div className="flex items-center gap-2 rounded-lg border border-slate-800 bg-slate-900/60 px-3 py-1.5 backdrop-blur">
+      <span className="text-xs text-slate-500">Navigasi pakai keyboard:</span>
+      <div className="flex items-center gap-1">
+        <kbd className="inline-flex h-5 w-6 items-center justify-center rounded border border-slate-700 bg-slate-800 font-mono text-xs text-slate-400 shadow-[0_1px_0_rgba(0,0,0,0.4)]">
+          ←
+        </kbd>
+        <kbd className="inline-flex h-5 w-6 items-center justify-center rounded border border-slate-700 bg-slate-800 font-mono text-xs text-slate-400 shadow-[0_1px_0_rgba(0,0,0,0.4)]">
+          →
+        </kbd>
+      </div>
+    </div>
+  );
+}
+
 export default function OOPPillarsPage() {
   const [selectedPillar, setSelectedPillar] = useState<PillarScenario>(
     PILLARS[0],
@@ -887,22 +902,6 @@ export default function OOPPillarsPage() {
     setActiveFile(Object.keys(p.files)[0]);
   };
 
-  const handleNext = () => {
-    if (currentStep < totalSteps - 1) {
-      const next = selectedPillar.steps[currentStep + 1];
-      setCurrentStep((s) => s + 1);
-      setActiveFile(next.file);
-    }
-  };
-
-  const handlePrev = () => {
-    if (currentStep > 0) {
-      const prev = selectedPillar.steps[currentStep - 1];
-      setCurrentStep((s) => s - 1);
-      setActiveFile(prev.file);
-    }
-  };
-
   const hasShown = useRef(false);
 
   useEffect(() => {
@@ -911,6 +910,33 @@ export default function OOPPillarsPage() {
     hasShown.current = true;
     toast.info('Disarankan menggunakan device desktop');
   }, []);
+
+  // ── Keyboard navigation ──────────────────────────────────────────────────
+
+  const handleNext = useCallback(() => {
+    if (currentStep < totalSteps - 1) {
+      const next = selectedPillar.steps[currentStep + 1];
+      setCurrentStep((s) => s + 1);
+      setActiveFile(next.file);
+    }
+  }, [currentStep, totalSteps]);
+
+  const handlePrev = useCallback(() => {
+    if (currentStep > 0) {
+      const prev = selectedPillar.steps[currentStep - 1];
+      setCurrentStep((s) => s - 1);
+      setActiveFile(prev.file);
+    }
+  }, [currentStep]);
+
+  useEffect(() => {
+    const onKey = (e: KeyboardEvent) => {
+      if (e.key === 'ArrowRight') handleNext();
+      if (e.key === 'ArrowLeft') handlePrev();
+    };
+    window.addEventListener('keydown', onKey);
+    return () => window.removeEventListener('keydown', onKey);
+  }, [handleNext, handlePrev]);
 
   const phaseStyles: Record<string, string> = {
     normal: 'text-slate-400 border-slate-700 bg-slate-800/50',
@@ -931,6 +957,7 @@ export default function OOPPillarsPage() {
 
   return (
     <div className="flex min-h-screen flex-col bg-[#0d1117] font-mono text-slate-200">
+      {/* Header */}
       <div className="sticky top-0 z-50 border-b border-slate-800 bg-[#0d1117]/95 backdrop-blur">
         <div className="flex flex-wrap items-center justify-between gap-3 px-4 py-3">
           <div className="flex items-center gap-3">
@@ -941,10 +968,10 @@ export default function OOPPillarsPage() {
             </Link>
             <div>
               <h1 className="text-base leading-none font-bold text-white">
-                Pilar OOP
+                Pilar-Pilar OOP
               </h1>
               <p className="mt-0.5 text-xs text-slate-500">
-                Pewarisan · Enkapsulasi · Polimorfisme · Abstraksi
+                Inheritance · Encapsulation · Polymorphism · Abstraction
               </p>
             </div>
           </div>
@@ -968,6 +995,7 @@ export default function OOPPillarsPage() {
             ))}
           </div>
         </div>
+        {/* File selector sub-bar */}
         <div className="flex items-center gap-3 border-t border-slate-800/60 bg-slate-900/30 px-4 py-2">
           <span className="text-xs text-slate-500">File:</span>
           {fileNames.map((f) => (
@@ -991,10 +1019,12 @@ export default function OOPPillarsPage() {
         </div>
       </div>
 
+      {/* Split View */}
       <div
         className="grid min-h-0 flex-1 grid-cols-2 gap-0"
         style={{ height: 'calc(100vh - 110px)' }}
       >
+        {/* LEFT: Code Panel */}
         <div className="flex flex-col border-r border-slate-800 bg-[#161b22]">
           <div className="flex items-center justify-between border-b border-slate-800 bg-slate-900/50 px-4 py-2.5">
             <div className="flex items-center gap-2">
@@ -1015,11 +1045,12 @@ export default function OOPPillarsPage() {
             </div>
           </div>
 
+          {/* State */}
           <div className="flex min-h-[52px] items-center border-b border-slate-800 bg-slate-900/20 px-4 py-2.5">
             {step.stateVars && Object.keys(step.stateVars).length > 0 ? (
               <div className="flex flex-wrap items-center gap-2">
-                <span className="text-xs tracking-wider text-slate-600 uppercase">
-                  Status:
+                <span className="text-xs tracking-wider text-slate-300 uppercase">
+                  State:
                 </span>
                 {Object.entries(step.stateVars).map(([k, v]) => (
                   <div
@@ -1035,12 +1066,13 @@ export default function OOPPillarsPage() {
                 ))}
               </div>
             ) : (
-              <p className="text-xs text-slate-600 italic">
+              <p className="text-xs text-slate-300 italic">
                 {step.description}
               </p>
             )}
           </div>
 
+          {/* Code */}
           <div className="flex-1 overflow-auto p-2">
             {displayCode.map((line, idx) => {
               const isActive = idx === activeLineIdx;
@@ -1088,6 +1120,7 @@ export default function OOPPillarsPage() {
             })}
           </div>
 
+          {/* Controls */}
           <div className="border-t border-slate-800 bg-slate-900/30 px-4 py-3">
             <div className="mb-2 flex items-center gap-2">
               <div className="h-1.5 flex-1 rounded-full bg-slate-800">
@@ -1102,6 +1135,9 @@ export default function OOPPillarsPage() {
                 {currentStep + 1}/{totalSteps}
               </span>
             </div>
+            <div className="mb-2 flex justify-center">
+              <KeyboardHint />
+            </div>
             <div className="flex justify-center gap-2">
               <Button
                 variant="outlined"
@@ -1113,7 +1149,7 @@ export default function OOPPillarsPage() {
                 disabled={currentStep === 0}
                 className="h-8 border-slate-700 bg-slate-800 px-3 text-xs text-slate-300 hover:bg-slate-700 disabled:opacity-30"
               >
-                ⏮ Ulang
+                ⏮ Reset
               </Button>
               <Button
                 variant="outlined"
@@ -1122,7 +1158,7 @@ export default function OOPPillarsPage() {
                 disabled={currentStep === 0}
                 className="h-8 border-slate-700 bg-slate-800 px-4 text-xs text-slate-300 hover:bg-slate-700 disabled:opacity-30"
               >
-                ← Sebelumnya
+                ← Prev
               </Button>
               <Button
                 variant="outlined"
@@ -1131,12 +1167,13 @@ export default function OOPPillarsPage() {
                 disabled={currentStep === totalSteps - 1}
                 className="h-8 border-slate-700 bg-slate-800 px-4 text-xs text-slate-300 hover:bg-slate-700 disabled:opacity-30"
               >
-                Berikutnya →
+                Next →
               </Button>
             </div>
           </div>
         </div>
 
+        {/* RIGHT: Diagram + Info Panel */}
         <div className="flex flex-col overflow-hidden bg-[#161b22]">
           <div className="flex items-center justify-between border-b border-slate-800 bg-slate-900/50 px-4 py-2.5">
             <div className="flex items-center gap-2">
@@ -1145,16 +1182,18 @@ export default function OOPPillarsPage() {
                 <div className="h-3 w-3 rounded-full bg-amber-500/80" />
                 <div className="h-3 w-3 rounded-full bg-emerald-500/80" />
               </div>
-              <span className="ml-2 text-xs text-slate-400">
-                diagram.tampilan
-              </span>
+              <span className="ml-2 text-xs text-slate-400">diagram.view</span>
             </div>
-            <span className="max-w-[300px] text-right text-xs text-slate-500">
+          </div>
+
+          <div className="flex min-h-[52px] items-center border-b border-slate-800 bg-slate-900/30 px-4 py-2.5">
+            <p className="text-sm leading-snug text-slate-300">
               {step.description}
-            </span>
+            </p>
           </div>
 
           <div className="flex flex-1 flex-col gap-4 overflow-auto px-5 py-4">
+            {/* Pillar definition */}
             <div
               className="rounded-xl border p-4"
               style={{
@@ -1185,14 +1224,16 @@ export default function OOPPillarsPage() {
               </div>
             </div>
 
+            {/* Class Diagram */}
             <ClassDiagram
               scenario={selectedPillar}
               activeClasses={step.highlightClasses || []}
             />
 
+            {/* All 4 pillars reminder */}
             <div className="rounded-xl border border-slate-800 bg-slate-900/50 p-4">
               <p className="mb-3 text-xs tracking-wider text-slate-500 uppercase">
-                4 Pilar OOP
+                The 4 Pilar-Pilar OOP
               </p>
               <div className="grid grid-cols-2 gap-2">
                 {PILLARS.map((p) => (
