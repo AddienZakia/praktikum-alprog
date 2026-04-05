@@ -786,7 +786,7 @@ export default function ClassObjectPage() {
     if (hasShown.current) return;
 
     hasShown.current = true;
-    toast.info('Disarankan menggunakan device desktop');
+    toast.info('Disarankan menggunakan perangkat desktop');
   }, []);
 
   return (

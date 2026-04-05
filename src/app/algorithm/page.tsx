@@ -692,7 +692,7 @@ export default function AlgorithmVisualizer() {
     if (hasShown.current) return;
 
     hasShown.current = true;
-    toast.info('Disarankan menggunakan device desktop');
+    toast.info('Disarankan menggunakan perangkat desktop');
   }, []);
   return (
     <div className="min-h-screen bg-[#0d1117] font-mono text-slate-200">
