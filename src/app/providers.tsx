@@ -1,5 +1,6 @@
 'use client';
 
+import GoogleAnalytics from '@/components/GoogleAnalytics';
 import { AppProgressProvider as ProgressProvider } from '@bprogress/next';
 import { Toaster } from 'sonner';
 
@@ -10,6 +11,7 @@ export default function Providers({ children }: { children: React.ReactNode }) {
       height="4px"
       options={{ showSpinner: false }}
     >
+      <GoogleAnalytics />
       <Toaster position="top-center" richColors />
       {children}
     </ProgressProvider>
